@@ -24,7 +24,7 @@ namespace vkb
     {
         command_pool::command_pool(device& d,
                                        uint32_t queue_family_index,
-                                       vkb::rendering::HPPRenderFrame* render_frame,
+                                       vkb::rendering::render_frame* render_frame,
                                        size_t thread_index,
                                        command_buffer::reset_mode reset_mode) :
             device_{d}, render_frame_{render_frame}, thread_index_{thread_index}, reset_mode_{reset_mode}
@@ -89,7 +89,7 @@ namespace vkb
             return queue_family_index_;
         }
 
-        vkb::rendering::HPPRenderFrame* command_pool::get_render_frame()
+        vkb::rendering::render_frame* command_pool::get_render_frame()
         {
             return render_frame_;
         }

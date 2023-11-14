@@ -23,7 +23,7 @@ namespace vkb
 {
     namespace rendering
     {
-        class HPPPipelineState;
+        class pipeline_state;
     }
 
     namespace core
@@ -45,7 +45,7 @@ namespace vkb
         class compute_pipeline : private vkb::ComputePipeline
         {
         public:
-            compute_pipeline(vkb::core::device& device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState& pipeline_state) :
+            compute_pipeline(vkb::core::device& device, vk::PipelineCache pipeline_cache, vkb::rendering::pipeline_state& pipeline_state) :
                 vkb::ComputePipeline(
                     reinterpret_cast<vkb::Device&>(device), static_cast<VkPipelineCache>(pipeline_cache), reinterpret_cast<vkb::PipelineState&>(pipeline_state))
             {
@@ -60,7 +60,7 @@ namespace vkb
         class graphics_pipeline : private vkb::GraphicsPipeline
         {
         public:
-            graphics_pipeline(vkb::core::device& device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState& pipeline_state) :
+            graphics_pipeline(vkb::core::device& device, vk::PipelineCache pipeline_cache, vkb::rendering::pipeline_state& pipeline_state) :
                 vkb::GraphicsPipeline(
                     reinterpret_cast<vkb::Device&>(device), static_cast<VkPipelineCache>(pipeline_cache), reinterpret_cast<vkb::PipelineState&>(pipeline_state))
             {

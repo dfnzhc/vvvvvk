@@ -77,11 +77,11 @@ class HPPVulkanSample : public vkb::Application
 		return render_context != nullptr;
 	}
 
-	vkb::rendering::HPPRenderContext &get_render_context();
+	vkb::rendering::render_context &get_render_context();
 
-	void set_render_pipeline(vkb::rendering::HPPRenderPipeline &&render_pipeline);
+	void set_render_pipeline(vkb::rendering::render_pipeline &&render_pipeline);
 
-	vkb::rendering::HPPRenderPipeline const &get_render_pipeline() const;
+	vkb::rendering::render_pipeline const &get_render_pipeline() const;
 
 	Configuration &get_configuration();
 
@@ -103,12 +103,12 @@ class HPPVulkanSample : public vkb::Application
 	/**
 	 * @brief Context used for rendering, it is responsible for managing the frames and their underlying images
 	 */
-	std::unique_ptr<vkb::rendering::HPPRenderContext> render_context;
+	std::unique_ptr<vkb::rendering::render_context> render_context;
 
 	/**
 	 * @brief Pipeline used for rendering, it should be set up by the concrete sample
 	 */
-	std::unique_ptr<vkb::rendering::HPPRenderPipeline> render_pipeline;
+	std::unique_ptr<vkb::rendering::render_pipeline> render_pipeline;
 
 	/**
 	 * @brief Holds all scene information

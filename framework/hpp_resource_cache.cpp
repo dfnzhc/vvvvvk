@@ -70,7 +70,7 @@ namespace vkb
         return state_;
     }
 
-    vkb::core::compute_pipeline& resource_cache::request_compute_pipeline(vkb::rendering::HPPPipelineState& pipeline_state)
+    vkb::core::compute_pipeline& resource_cache::request_compute_pipeline(vkb::rendering::pipeline_state& pipeline_state)
     {
         return request_resource(device_, recorder_, compute_pipeline_mutex, state_.compute_pipelines, pipeline_cache_, pipeline_state);
     }
@@ -96,7 +96,7 @@ namespace vkb
         return request_resource(device_, recorder_, framebuffer_mutex_, state_.framebuffers, render_target, render_pass);
     }
 
-    vkb::core::graphics_pipeline& resource_cache::request_graphics_pipeline(vkb::rendering::HPPPipelineState& pipeline_state)
+    vkb::core::graphics_pipeline& resource_cache::request_graphics_pipeline(vkb::rendering::pipeline_state& pipeline_state)
     {
         return request_resource(device_, recorder_, graphics_pipeline_mutex_, state_.graphics_pipelines, pipeline_cache_, pipeline_state);
     }

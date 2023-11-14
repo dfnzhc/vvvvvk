@@ -33,7 +33,7 @@ namespace vkb
             return vkb::add_free_camera(scene, node_name, static_cast<VkExtent2D>(extent));
         }
 
-        inline void screenshot(vkb::rendering::HPPRenderContext& render_context, const std::string& filename)
+        inline void screenshot(vkb::rendering::render_context& render_context, const std::string& filename)
         {
             vkb::screenshot(reinterpret_cast<vkb::RenderContext&>(render_context), filename);
         }

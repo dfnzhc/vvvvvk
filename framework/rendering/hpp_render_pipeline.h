@@ -23,29 +23,24 @@
 
 namespace vkb
 {
-namespace rendering
-{
-/**
- * @brief facade class around vkb::RenderPipeline, providing a vulkan.hpp-based interface
- *
- * See vkb::RenderPipeline for documentation
- */
-class HPPRenderPipeline : private vkb::RenderPipeline
-{
-  public:
-	void add_subpass(std::unique_ptr<vkb::rendering::subpasses::HPPForwardSubpass> &&subpass)
-	{
-		vkb::RenderPipeline::add_subpass(std::move(subpass));
-	}
+    namespace rendering
+    {
+        class render_pipeline : private vkb::RenderPipeline
+        {
+        public:
+            void add_subpass(std::unique_ptr<vkb::rendering::subpasses::forward_subpass>&& subpass)
+            {
+                vkb::RenderPipeline::add_subpass(std::move(subpass));
+            }
 
-	void draw(vkb::core::command_buffer     &command_buffer,
-	          vkb::rendering::render_target &render_target,
-	          vk::SubpassContents              contents = vk::SubpassContents::eInline)
-	{
-		vkb::RenderPipeline::draw(reinterpret_cast<vkb::CommandBuffer &>(command_buffer),
-		                          reinterpret_cast<vkb::RenderTarget &>(render_target),
-		                          static_cast<VkSubpassContents>(contents));
-	}
-};
-}        // namespace rendering
-}        // namespace vkb
+            void draw(vkb::core::command_buffer& command_buffer,
+                      vkb::rendering::render_target& render_target,
+                      vk::SubpassContents contents = vk::SubpassContents::eInline)
+            {
+                vkb::RenderPipeline::draw(reinterpret_cast<vkb::CommandBuffer&>(command_buffer),
+                                          reinterpret_cast<vkb::RenderTarget&>(render_target),
+                                          static_cast<VkSubpassContents>(contents));
+            }
+        };
+    } // namespace rendering
+} // namespace vkb

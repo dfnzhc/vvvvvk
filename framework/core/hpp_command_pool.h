@@ -24,7 +24,7 @@ namespace vkb
 {
     namespace rendering
     {
-        class HPPRenderFrame;
+        class render_frame;
     }
 
     namespace core
@@ -36,7 +36,7 @@ namespace vkb
         public:
             command_pool(device& device,
                          uint32_t queue_family_index,
-                         vkb::rendering::HPPRenderFrame* render_frame = nullptr,
+                         vkb::rendering::render_frame* render_frame = nullptr,
                          size_t thread_index = 0,
                          command_buffer::reset_mode reset_mode = command_buffer::reset_mode::ResetPool);
             command_pool(const command_pool&) = delete;
@@ -49,7 +49,7 @@ namespace vkb
             device& get_device();
             vk::CommandPool get_handle() const;
             uint32_t get_queue_family_index() const;
-            vkb::rendering::HPPRenderFrame* get_render_frame();
+            vkb::rendering::render_frame* get_render_frame();
             command_buffer::reset_mode get_reset_mode() const;
             size_t get_thread_index() const;
             command_buffer& request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
@@ -61,7 +61,7 @@ namespace vkb
         private:
             device& device_;
             vk::CommandPool handle_ = nullptr;
-            vkb::rendering::HPPRenderFrame* render_frame_ = nullptr;
+            vkb::rendering::render_frame* render_frame_ = nullptr;
             size_t thread_index_ = 0;
             uint32_t queue_family_index_ = 0;
             std::vector<std::unique_ptr<command_buffer>> primary_command_buffers_;

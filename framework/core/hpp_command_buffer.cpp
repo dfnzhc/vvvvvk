@@ -191,7 +191,7 @@ namespace vkb
 
         void command_buffer::bind_lighting(vkb::rendering::lighting_state& lighting_state, uint32_t set, uint32_t binding)
         {
-            bind_buffer(lighting_state.light_buffer.get_buffer(), lighting_state.light_buffer.get_offset(), lighting_state.light_buffer.get_size(), set, binding, 0);
+            bind_buffer(lighting_state.light_buffer.buffer(), lighting_state.light_buffer.offset(), lighting_state.light_buffer.size(), set, binding, 0);
 
             set_specialization_constant(0, to_u32(lighting_state.directional_lights.size()));
             set_specialization_constant(1, to_u32(lighting_state.point_lights.size()));
@@ -440,7 +440,7 @@ namespace vkb
             get_handle().setBlendConstants(blend_constants.data());
         }
 
-        void command_buffer::set_color_blend_state(const vkb::rendering::HPPColorBlendState& state_info)
+        void command_buffer::set_color_blend_state(const vkb::rendering::color_blend_state& state_info)
         {
             pipeline_state_.set_color_blend_state(state_info);
         }
@@ -455,12 +455,12 @@ namespace vkb
             get_handle().setDepthBounds(min_depth_bounds, max_depth_bounds);
         }
 
-        void command_buffer::set_depth_stencil_state(const vkb::rendering::HPPDepthStencilState& state_info)
+        void command_buffer::set_depth_stencil_state(const vkb::rendering::depth_stencil_state& state_info)
         {
             pipeline_state_.set_depth_stencil_state(state_info);
         }
 
-        void command_buffer::set_input_assembly_state(const vkb::rendering::HPPInputAssemblyState& state_info)
+        void command_buffer::set_input_assembly_state(const vkb::rendering::input_assembly_state& state_info)
         {
             pipeline_state_.set_input_assembly_state(state_info);
         }
@@ -470,12 +470,12 @@ namespace vkb
             get_handle().setLineWidth(line_width);
         }
 
-        void command_buffer::set_multisample_state(const vkb::rendering::HPPMultisampleState& state_info)
+        void command_buffer::set_multisample_state(const vkb::rendering::multisample_state& state_info)
         {
             pipeline_state_.set_multisample_state(state_info);
         }
 
-        void command_buffer::set_rasterization_state(const vkb::rendering::HPPRasterizationState& state_info)
+        void command_buffer::set_rasterization_state(const vkb::rendering::rasterization_state& state_info)
         {
             pipeline_state_.set_rasterization_state(state_info);
         }
@@ -495,7 +495,7 @@ namespace vkb
             update_after_bind_ = update_after_bind_;
         }
 
-        void command_buffer::set_vertex_input_state(const vkb::rendering::HPPVertexInputState& state_info)
+        void command_buffer::set_vertex_input_state(const vkb::rendering::vertex_input_state& state_info)
         {
             pipeline_state_.set_vertex_input_state(state_info);
         }
@@ -505,7 +505,7 @@ namespace vkb
             get_handle().setViewport(first_viewport, viewports);
         }
 
-        void command_buffer::set_viewport_state(const vkb::rendering::HPPViewportState& state_info)
+        void command_buffer::set_viewport_state(const vkb::rendering::viewport_state& state_info)
         {
             pipeline_state_.set_viewport_state(state_info);
         }

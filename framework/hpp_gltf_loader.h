@@ -24,25 +24,26 @@
 
 namespace vkb
 {
-/**
- * @brief facade class around vkb::GLTFLoader, providing a vulkan.hpp-based interface
- *
- * See vkb::GLTFLoader for documentation
- */
-class HPPGLTFLoader : private vkb::GLTFLoader
-{
-  public:
-	using vkb::GLTFLoader::read_scene_from_file;
+    /**
+     * @brief facade class around vkb::GLTFLoader, providing a vulkan.hpp-based interface
+     *
+     * See vkb::GLTFLoader for documentation
+     */
+    class gltf_loader : private vkb::GLTFLoader
+    {
+    public:
+        using vkb::GLTFLoader::read_scene_from_file;
 
-	HPPGLTFLoader(vkb::core::device const &device) :
-	    GLTFLoader(reinterpret_cast<vkb::Device const &>(device))
-	{}
+        gltf_loader(vkb::core::device const& device) :
+            GLTFLoader(reinterpret_cast<vkb::Device const&>(device))
+        {
+        }
 
-	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> read_model_from_file(const std::string &file_name, uint32_t index)
-	{
-		return std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>(
-		    reinterpret_cast<vkb::scene_graph::components::HPPSubMesh *>(
-		        vkb::GLTFLoader::read_model_from_file(file_name, index).release()));
-	}
-};
-}        // namespace vkb
+        std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> read_model_from_file(const std::string& file_name, uint32_t index)
+        {
+            return std::unique_ptr<vkb::scene_graph::components::HPPSubMesh>(
+                reinterpret_cast<vkb::scene_graph::components::HPPSubMesh*>(
+                    vkb::GLTFLoader::read_model_from_file(file_name, index).release()));
+        }
+    };
+} // namespace vkb

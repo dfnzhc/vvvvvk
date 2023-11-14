@@ -137,14 +137,14 @@ namespace vkb
             void reset_query_pool(const vkb::core::query_pool& query_pool, uint32_t first_query, uint32_t query_count);
             void resolve_image(const vkb::core::image& src_img, const vkb::core::image& dst_img, const std::vector<vk::ImageResolve>& regions);
             void set_blend_constants(const std::array<float, 4>& blend_constants);
-            void set_color_blend_state(const vkb::rendering::HPPColorBlendState& state_info);
+            void set_color_blend_state(const vkb::rendering::color_blend_state& state_info);
             void set_depth_bias(float depth_bias_constant_factor, float depth_bias_clamp, float depth_bias_slope_factor);
             void set_depth_bounds(float min_depth_bounds, float max_depth_bounds);
-            void set_depth_stencil_state(const vkb::rendering::HPPDepthStencilState& state_info);
-            void set_input_assembly_state(const vkb::rendering::HPPInputAssemblyState& state_info);
+            void set_depth_stencil_state(const vkb::rendering::depth_stencil_state& state_info);
+            void set_input_assembly_state(const vkb::rendering::input_assembly_state& state_info);
             void set_line_width(float line_width);
-            void set_multisample_state(const vkb::rendering::HPPMultisampleState& state_info);
-            void set_rasterization_state(const vkb::rendering::HPPRasterizationState& state_info);
+            void set_multisample_state(const vkb::rendering::multisample_state& state_info);
+            void set_rasterization_state(const vkb::rendering::rasterization_state& state_info);
             void set_scissor(uint32_t first_scissor, const std::vector<vk::Rect2D>& scissors);
 
             template <class T>
@@ -152,9 +152,9 @@ namespace vkb
             void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t>& data);
 
             void set_update_after_bind(bool update_after_bind_);
-            void set_vertex_input_state(const vkb::rendering::HPPVertexInputState& state_info);
+            void set_vertex_input_state(const vkb::rendering::vertex_input_state& state_info);
             void set_viewport(uint32_t first_viewport, const std::vector<vk::Viewport>& viewports);
-            void set_viewport_state(const vkb::rendering::HPPViewportState& state_info);
+            void set_viewport_state(const vkb::rendering::viewport_state& state_info);
             void update_buffer(const vkb::core::HPPBuffer& buffer, vk::DeviceSize offset, const std::vector<uint8_t>& data);
             void write_timestamp(vk::PipelineStageFlagBits pipeline_stage, const vkb::core::query_pool& query_pool, uint32_t query);
 
@@ -174,8 +174,8 @@ namespace vkb
             const vk::CommandBufferLevel level_ = {};
             vkb::core::command_pool& command_pool_;
             render_pass_binding current_render_pass_ = {};
-            vkb::rendering::HPPPipelineState pipeline_state_ = {};
-            vkb::HPPResourceBindingState resource_binding_state_ = {};
+            vkb::rendering::pipeline_state pipeline_state_ = {};
+            vkb::resource_binding_state resource_binding_state_ = {};
 
             std::vector<uint8_t> stored_push_constants_ = {};
             uint32_t max_push_constants_size_ = {};

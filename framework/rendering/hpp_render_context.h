@@ -1,20 +1,3 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- * Licensed under the Apache License, Version 2.0 the "License";
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 #pragma once
 
 #include <core/hpp_device.h>
@@ -24,219 +7,103 @@
 
 namespace vkb
 {
-namespace rendering
-{
-/**
- * @brief HPPRenderContext is a transcoded version of vkb::RenderContext from vulkan to vulkan-hpp.
- *
- * See vkb::RenderContext for documentation
- */
-class HPPRenderContext
-{
-  public:
-	// The format to use for the RenderTargets if a swapchain isn't created
-	static vk::Format DEFAULT_VK_FORMAT;
+    namespace rendering
+    {
+        class render_context
+        {
+        public:
+            static vk::Format DEFAULT_VK_FORMAT;
 
-	/**
-	 * @brief Constructor
-	 * @param device A valid device
-	 * @param surface A surface, nullptr if in headless mode
-	 * @param window The window where the surface was created
-	 * @param present_mode Requests to set the present mode of the swapchain
-	 * @param present_mode_priority_list The order in which the swapchain prioritizes selecting its present mode
-	 * @param surface_format_priority_list The order in which the swapchain prioritizes selecting its surface format
-	 */
-	HPPRenderContext(vkb::core::device                    &device,
-	                 vk::SurfaceKHR                           surface,
-	                 const vkb::Window                       &window,
-	                 vk::PresentModeKHR                       present_mode                 = vk::PresentModeKHR::eFifo,
-	                 std::vector<vk::PresentModeKHR> const   &present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
-	                 std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list = {
-	                     {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}, {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}});
+            render_context(vkb::core::device& device,
+                           vk::SurfaceKHR surface,
+                           const vkb::Window& window,
+                           vk::PresentModeKHR present_mode = vk::PresentModeKHR::eFifo,
+                           std::vector<vk::PresentModeKHR> const& present_mode_priority_list = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
+                           std::vector<vk::SurfaceFormatKHR> const& surface_format_priority_list = {
+                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}, {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}
+                           });
 
-	HPPRenderContext(const HPPRenderContext &) = delete;
+            virtual ~render_context() = default;
 
-	HPPRenderContext(HPPRenderContext &&) = delete;
+            render_context(const render_context&) = delete;
+            render_context(render_context&&) = delete;
 
-	virtual ~HPPRenderContext() = default;
+            render_context& operator=(const render_context&) = delete;
+            render_context& operator=(render_context&&) = delete;
 
-	HPPRenderContext &operator=(const HPPRenderContext &) = delete;
+            void prepare(size_t thread_count = 1, render_target::CreateFunc create_render_target_func = render_target::DEFAULT_CREATE_FUNC);
 
-	HPPRenderContext &operator=(HPPRenderContext &&) = delete;
+            void update_swapchain(const vk::Extent2D& extent);
+            void update_swapchain(const uint32_t image_count);
+            void update_swapchain(const std::set<vk::ImageUsageFlagBits>& image_usage_flags);
+            void update_swapchain(const vk::Extent2D& extent, const vk::SurfaceTransformFlagBitsKHR transform);
 
-	/**
-	 * @brief Prepares the RenderFrames for rendering
-	 * @param thread_count The number of threads in the application, necessary to allocate this many resource pools for each RenderFrame
-	 * @param create_render_target_func A function delegate, used to create a RenderTarget
-	 */
-	void prepare(size_t thread_count = 1, render_target::CreateFunc create_render_target_func = render_target::DEFAULT_CREATE_FUNC);
+            bool has_swapchain();
 
-	/**
-	 * @brief Updates the swapchains extent, if a swapchain exists
-	 * @param extent The width and height of the new swapchain images
-	 */
-	void update_swapchain(const vk::Extent2D &extent);
+            void recreate();
+            void recreate_swapchain();
 
-	/**
-	 * @brief Updates the swapchains image count, if a swapchain exists
-	 * @param image_count The amount of images in the new swapchain
-	 */
-	void update_swapchain(const uint32_t image_count);
+            vkb::core::command_buffer& begin(vkb::core::command_buffer::reset_mode reset_mode = vkb::core::command_buffer::reset_mode::ResetPool);
 
-	/**
-	 * @brief Updates the swapchains image usage, if a swapchain exists
-	 * @param image_usage_flags The usage flags the new swapchain images will have
-	 */
-	void update_swapchain(const std::set<vk::ImageUsageFlagBits> &image_usage_flags);
+            void submit(vkb::core::command_buffer& command_buffer);
+            void submit(const std::vector<vkb::core::command_buffer*>& command_buffers);
 
-	/**
-	 * @brief Updates the swapchains extent and surface transform, if a swapchain exists
-	 * @param extent The width and height of the new swapchain images
-	 * @param transform The surface transform flags
-	 */
-	void update_swapchain(const vk::Extent2D &extent, const vk::SurfaceTransformFlagBitsKHR transform);
+            vk::Semaphore submit(const vkb::core::queue& queue,
+                                 const std::vector<vkb::core::command_buffer*>& command_buffers,
+                                 vk::Semaphore wait_semaphore,
+                                 vk::PipelineStageFlags wait_pipeline_stage);
 
-	/**
-	 * @returns True if a valid swapchain exists in the HPPRenderContext
-	 */
-	bool has_swapchain();
+            void submit(const vkb::core::queue& queue, const std::vector<vkb::core::command_buffer*>& command_buffers);
 
-	/**
-	 * @brief Recreates the RenderFrames, called after every update
-	 */
-	void recreate();
+            void begin_frame();
+            void end_frame(vk::Semaphore semaphore);
+            virtual void wait_frame();
 
-	/**
-	 * @brief Recreates the swapchain
-	 */
-	void recreate_swapchain();
+            render_frame& active_frame();
+            uint32_t active_frame_index();
+            render_frame& last_rendered_frame();
 
-	/**
-	 * @brief Prepares the next available frame for rendering
-	 * @param reset_mode How to reset the command buffer
-	 * @returns A valid command buffer to record commands to be submitted
-	 * Also ensures that there is an active frame if there is no existing active frame already
-	 */
-	vkb::core::command_buffer &begin(vkb::core::command_buffer::reset_mode reset_mode = vkb::core::command_buffer::reset_mode::ResetPool);
+            vk::Semaphore request_semaphore();
+            vk::Semaphore request_semaphore_with_ownership();
+            void release_owned_semaphore(vk::Semaphore semaphore);
 
-	/**
-	 * @brief Submits the command buffer to the right queue
-	 * @param command_buffer A command buffer containing recorded commands
-	 */
-	void submit(vkb::core::command_buffer &command_buffer);
+            vkb::core::device& get_device();
+            vk::Format format() const;
 
-	/**
-	 * @brief Submits multiple command buffers to the right queue
-	 * @param command_buffers Command buffers containing recorded commands
-	 */
-	void submit(const std::vector<vkb::core::command_buffer *> &command_buffers);
+            vkb::core::swapchain const& swapchain() const;
+            vk::Extent2D const& surface_extent() const;
 
-	/**
-	 * @brief begin_frame
-	 */
-	void begin_frame();
+            uint32_t active_frame_index() const;
+            std::vector<std::unique_ptr<render_frame>>& render_frames();
 
-	vk::Semaphore submit(const vkb::core::queue                        &queue,
-	                     const std::vector<vkb::core::command_buffer *> &command_buffers,
-	                     vk::Semaphore                                     wait_semaphore,
-	                     vk::PipelineStageFlags                            wait_pipeline_stage);
+            virtual bool handle_surface_changes(bool force_update = false);
 
-	/**
-	 * @brief Submits a command buffer related to a frame to a queue
-	 */
-	void submit(const vkb::core::queue &queue, const std::vector<vkb::core::command_buffer *> &command_buffers);
+            vk::Semaphore consume_acquired_semaphore();
 
-	/**
-	 * @brief Waits a frame to finish its rendering
-	 */
-	virtual void wait_frame();
+        protected:
+            vk::Extent2D surface_extent_;
 
-	void end_frame(vk::Semaphore semaphore);
+        private:
+            vkb::core::device& device_;
+            const vkb::Window& window_;
 
-	/**
-	 * @brief An error should be raised if the frame is not active.
-	 *        A frame is active after @ref begin_frame has been called.
-	 * @return The current active frame
-	 */
-	HPPRenderFrame &get_active_frame();
+            const vkb::core::queue& queue_;
 
-	/**
-	 * @brief An error should be raised if the frame is not active.
-	 *        A frame is active after @ref begin_frame has been called.
-	 * @return The current active frame index
-	 */
-	uint32_t get_active_frame_index();
+            std::unique_ptr<vkb::core::swapchain> swapchain_;
+            vkb::core::HPPSwapchainProperties swapchain_properties_;
+            std::vector<std::unique_ptr<render_frame>> frames_;
 
-	/**
-	 * @brief An error should be raised if a frame is active.
-	 *        A frame is active after @ref begin_frame has been called.
-	 * @return The previous frame
-	 */
-	HPPRenderFrame &get_last_rendered_frame();
+            vk::Semaphore acquired_semaphore_;
 
-	vk::Semaphore request_semaphore();
-	vk::Semaphore request_semaphore_with_ownership();
-	void          release_owned_semaphore(vk::Semaphore semaphore);
+            bool prepared_{false};
 
-	vkb::core::device &get_device();
+            uint32_t active_frame_index_{0};
+            bool frame_active_{false};
 
-	/**
-	 * @brief Returns the format that the RenderTargets are created with within the HPPRenderContext
-	 */
-	vk::Format get_format() const;
+            render_target::CreateFunc create_render_target_func_ = render_target::DEFAULT_CREATE_FUNC;
+            vk::SurfaceTransformFlagBitsKHR pre_transform_{vk::SurfaceTransformFlagBitsKHR::eIdentity};
 
-	vkb::core::swapchain const &get_swapchain() const;
-
-	vk::Extent2D const &get_surface_extent() const;
-
-	uint32_t get_active_frame_index() const;
-
-	std::vector<std::unique_ptr<HPPRenderFrame>> &get_render_frames();
-
-	/**
-	 * @brief Handles surface changes, only applicable if the render_context makes use of a swapchain
-	 */
-	virtual bool handle_surface_changes(bool force_update = false);
-
-	/**
-	 * @brief Returns the WSI acquire semaphore. Only to be used in very special circumstances.
-	 * @return The WSI acquire semaphore.
-	 */
-	vk::Semaphore consume_acquired_semaphore();
-
-  protected:
-	vk::Extent2D surface_extent;
-
-  private:
-	vkb::core::device &device;
-
-	const vkb::Window &window;
-
-	/// If swapchain exists, then this will be a present supported queue, else a graphics queue
-	const vkb::core::queue &queue;
-
-	std::unique_ptr<vkb::core::swapchain> swapchain;
-
-	vkb::core::HPPSwapchainProperties swapchain_properties;
-
-	std::vector<std::unique_ptr<HPPRenderFrame>> frames;
-
-	vk::Semaphore acquired_semaphore;
-
-	bool prepared{false};
-
-	/// Current active frame index
-	uint32_t active_frame_index{0};
-
-	/// Whether a frame is active or not
-	bool frame_active{false};
-
-	render_target::CreateFunc create_render_target_func = render_target::DEFAULT_CREATE_FUNC;
-
-	vk::SurfaceTransformFlagBitsKHR pre_transform{vk::SurfaceTransformFlagBitsKHR::eIdentity};
-
-	size_t thread_count{1};
-};
-
-}        // namespace rendering
-}        // namespace vkb
+            size_t thread_count_{1};
+        };
+    } // namespace rendering
+} // namespace vkb

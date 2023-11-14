@@ -64,7 +64,7 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	create_pipeline_cache();
 	setup_framebuffer();
 
-	extent = get_render_context().get_surface_extent();
+	extent = get_render_context().surface_extent();
 
 	prepare_gui();
 
@@ -108,12 +108,12 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	get_render_context().handle_surface_changes();
 
 	// Don't recreate the swapchain if the dimensions haven't changed
-	if (extent == get_render_context().get_surface_extent())
+	if (extent == get_render_context().surface_extent())
 	{
 		return false;
 	}
 
-	extent = get_render_context().get_surface_extent();
+	extent = get_render_context().surface_extent();
 
 	prepared = false;
 
@@ -393,7 +393,7 @@ void HPPApiVulkanSample::create_command_buffers()
 {
 	// Create one command buffer for each swap chain image and reuse for rendering
 	vk::CommandBufferAllocateInfo allocate_info(
-	    cmd_pool, vk::CommandBufferLevel::ePrimary, static_cast<uint32_t>(get_render_context().get_render_frames().size()));
+	    cmd_pool, vk::CommandBufferLevel::ePrimary, static_cast<uint32_t>(get_render_context().render_frames().size()));
 
 	draw_cmd_buffers = get_device()->get_handle().allocateCommandBuffers(allocate_info);
 }
@@ -452,7 +452,7 @@ void HPPApiVulkanSample::prepare_frame()
 		vk::Result result;
 		try
 		{
-			std::tie(result, current_buffer) = get_render_context().get_swapchain().acquire_next_image(semaphores.acquired_image_ready);
+			std::tie(result, current_buffer) = get_render_context().swapchain().acquire_next_image(semaphores.acquired_image_ready);
 		}
 		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR)
 		// Don't catch other failures here, they are propagated up the calling hierarchy
@@ -471,7 +471,7 @@ void HPPApiVulkanSample::submit_frame()
 	{
 		const auto &queue = get_device()->get_queue_by_present(0);
 
-		vk::SwapchainKHR swapchain = get_render_context().get_swapchain().handle();
+		vk::SwapchainKHR swapchain = get_render_context().swapchain().handle();
 
 		vk::PresentInfoKHR present_info({}, swapchain, current_buffer);
 		// Check if a wait semaphore has been specified to wait for before presenting the image
@@ -593,7 +593,7 @@ void HPPApiVulkanSample::create_command_pool()
 
 void HPPApiVulkanSample::setup_depth_stencil()
 {
-	std::tie(depth_stencil.image, depth_stencil.mem) = get_device()->create_image(depth_format, get_render_context().get_surface_extent(), 1, vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eDeviceLocal);
+	std::tie(depth_stencil.image, depth_stencil.mem) = get_device()->create_image(depth_format, get_render_context().surface_extent(), 1, vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
 	vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eDepth;
 	// Stencil aspect should only be set on depth + stencil formats
@@ -614,7 +614,7 @@ void HPPApiVulkanSample::setup_framebuffer()
 	attachments[1] = depth_stencil.view;
 
 	vk::FramebufferCreateInfo framebuffer_create_info(
-	    {}, render_pass, attachments, get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 1);
+	    {}, render_pass, attachments, get_render_context().surface_extent().width, get_render_context().surface_extent().height, 1);
 
 	// Delete existing frame buffers
 	for (auto &framebuffer : framebuffers)
@@ -636,7 +636,7 @@ void HPPApiVulkanSample::setup_render_pass()
 {
 	std::array<vk::AttachmentDescription, 2> attachments;
 	// Color attachment
-	attachments[0].format         = get_render_context().get_format();
+	attachments[0].format         = get_render_context().format();
 	attachments[0].samples        = vk::SampleCountFlagBits::e1;
 	attachments[0].loadOp         = vk::AttachmentLoadOp::eClear;
 	attachments[0].storeOp        = vk::AttachmentStoreOp::eStore;
@@ -700,7 +700,7 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 
 	std::array<vk::AttachmentDescription, 2> attachments = {};
 	// Color attachment
-	attachments[0].format         = get_render_context().get_format();
+	attachments[0].format         = get_render_context().format();
 	attachments[0].samples        = vk::SampleCountFlagBits::e1;
 	attachments[0].loadOp         = color_attachment_load_op;
 	attachments[0].storeOp        = vk::AttachmentStoreOp::eStore;
@@ -765,7 +765,7 @@ void HPPApiVulkanSample::create_swapchain_buffers()
 {
 	if (get_render_context().has_swapchain())
 	{
-		auto &images = get_render_context().get_swapchain().images();
+		auto &images = get_render_context().swapchain().images();
 
 		// Get the swap chain buffers containing the image and imageview
 		for (auto &swapchain_buffer : swapchain_buffers)
@@ -777,12 +777,12 @@ void HPPApiVulkanSample::create_swapchain_buffers()
 		for (auto &image : images)
 		{
 			swapchain_buffers.push_back(
-			    {image, vkb::common::create_image_view(get_device()->get_handle(), image, vk::ImageViewType::e2D, get_render_context().get_swapchain().format())});
+			    {image, vkb::common::create_image_view(get_device()->get_handle(), image, vk::ImageViewType::e2D, get_render_context().swapchain().format())});
 		}
 	}
 	else
 	{
-		auto &frames = get_render_context().get_render_frames();
+		auto &frames = get_render_context().render_frames();
 
 		// Get the swap chain buffers containing the image and imageview
 		swapchain_buffers.clear();
@@ -805,9 +805,9 @@ void HPPApiVulkanSample::update_swapchain_image_usage_flags(std::set<vk::ImageUs
 void HPPApiVulkanSample::handle_surface_changes()
 {
 	vk::SurfaceCapabilitiesKHR surface_properties =
-	    get_device()->get_gpu().get_handle().getSurfaceCapabilitiesKHR(get_render_context().get_swapchain().surface());
+	    get_device()->get_gpu().get_handle().getSurfaceCapabilitiesKHR(get_render_context().swapchain().surface());
 
-	if (surface_properties.currentExtent != get_render_context().get_surface_extent())
+	if (surface_properties.currentExtent != get_render_context().surface_extent())
 	{
 		resize(surface_properties.currentExtent.width, surface_properties.currentExtent.height);
 	}
@@ -1021,7 +1021,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 
 std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> HPPApiVulkanSample::load_model(const std::string &file, uint32_t index)
 {
-	vkb::HPPGLTFLoader loader{*get_device()};
+	vkb::gltf_loader loader{*get_device()};
 
 	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> model = loader.read_model_from_file(file, index);
 

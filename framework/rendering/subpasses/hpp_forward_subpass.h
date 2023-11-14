@@ -23,31 +23,31 @@
 
 namespace vkb
 {
-namespace rendering
-{
-namespace subpasses
-{
-/**
- * @brief facade class around vkb::ForwardSubpass, providing a vulkan.hpp-based interface
- *
- * See vkb::ForwardSubpass for documentation
- */
-class HPPForwardSubpass : public vkb::ForwardSubpass
-{
-  public:
-	HPPForwardSubpass(vkb::rendering::HPPRenderContext &render_context,
-	                  vkb::ShaderSource &&              vertex_shader,
-	                  vkb::ShaderSource &&              fragment_shader,
-	                  vkb::sg::Scene &                  scene,
-	                  vkb::sg::Camera &                 camera) :
-	    vkb::ForwardSubpass(reinterpret_cast<vkb::RenderContext &>(render_context),
-	                        std::forward<ShaderSource>(vertex_shader),
-	                        std::forward<ShaderSource>(fragment_shader),
-	                        scene,
-	                        camera)
-	{}
-};
-
-}        // namespace subpasses
-}        // namespace rendering
-}        // namespace vkb
+    namespace rendering
+    {
+        namespace subpasses
+        {
+            /**
+             * @brief facade class around vkb::ForwardSubpass, providing a vulkan.hpp-based interface
+             *
+             * See vkb::ForwardSubpass for documentation
+             */
+            class forward_subpass : public vkb::ForwardSubpass
+            {
+            public:
+                forward_subpass(vkb::rendering::render_context& render_context,
+                                vkb::ShaderSource&& vertex_shader,
+                                vkb::ShaderSource&& fragment_shader,
+                                vkb::sg::Scene& scene,
+                                vkb::sg::Camera& camera) :
+                    vkb::ForwardSubpass(reinterpret_cast<vkb::RenderContext&>(render_context),
+                                        std::forward<ShaderSource>(vertex_shader),
+                                        std::forward<ShaderSource>(fragment_shader),
+                                        scene,
+                                        camera)
+                {
+                }
+            };
+        } // namespace subpasses
+    } // namespace rendering
+} // namespace vkb

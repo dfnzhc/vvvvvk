@@ -22,48 +22,48 @@
 
 namespace vkb
 {
-/**
- * @brief facade class around vkb::BufferAllocation, providing a vulkan.hpp-based interface
- *
- * See vkb::BufferAllocation for documentation
- */
-class HPPBufferAllocation : private vkb::BufferAllocation
-{
-  public:
-	using vkb::BufferAllocation::update;
+    /**
+     * @brief facade class around vkb::BufferAllocation, providing a vulkan.hpp-based interface
+     *
+     * See vkb::BufferAllocation for documentation
+     */
+    class buffer_allocation : private vkb::BufferAllocation
+    {
+    public:
+        using vkb::BufferAllocation::update;
 
-  public:
-	vkb::core::HPPBuffer &get_buffer()
-	{
-		return reinterpret_cast<vkb::core::HPPBuffer &>(vkb::BufferAllocation::get_buffer());
-	}
+    public:
+        vkb::core::HPPBuffer& buffer()
+        {
+            return reinterpret_cast<vkb::core::HPPBuffer&>(vkb::BufferAllocation::get_buffer());
+        }
 
-	vk::DeviceSize get_offset() const
-	{
-		return static_cast<vk::DeviceSize>(vkb::BufferAllocation::get_offset());
-	}
+        vk::DeviceSize offset() const
+        {
+            return static_cast<vk::DeviceSize>(vkb::BufferAllocation::get_offset());
+        }
 
-	vk::DeviceSize get_size() const
-	{
-		return static_cast<vk::DeviceSize>(vkb::BufferAllocation::get_size());
-	}
-};
+        vk::DeviceSize size() const
+        {
+            return static_cast<vk::DeviceSize>(vkb::BufferAllocation::get_size());
+        }
+    };
 
-/**
- * @brief facade class around vkb::BufferBlock, providing a vulkan.hpp-based interface
- *
- * See vkb::BufferBlock for documentation
- */
-class HPPBufferBlock : private vkb::BufferBlock
-{
-};
+    /**
+     * @brief facade class around vkb::BufferBlock, providing a vulkan.hpp-based interface
+     *
+     * See vkb::BufferBlock for documentation
+     */
+    class buffer_block : private vkb::BufferBlock
+    {
+    };
 
-/**
- * @brief facade class around vkb::BufferPool, providing a vulkan.hpp-based interface
- *
- * See vkb::BufferPool for documentation
- */
-class HPPBufferPool : private vkb::BufferPool
-{
-};
-}        // namespace vkb
+    /**
+     * @brief facade class around vkb::BufferPool, providing a vulkan.hpp-based interface
+     *
+     * See vkb::BufferPool for documentation
+     */
+    class buffer_pool : private vkb::BufferPool
+    {
+    };
+} // namespace vkb

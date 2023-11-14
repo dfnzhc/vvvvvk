@@ -75,7 +75,7 @@ namespace vkb
         void clear_framebuffers();
         void clear_pipelines();
         const resource_cache_state& get_internal_state() const;
-        vkb::core::compute_pipeline& request_compute_pipeline(vkb::rendering::HPPPipelineState& pipeline_state);
+        vkb::core::compute_pipeline& request_compute_pipeline(vkb::rendering::pipeline_state& pipeline_state);
         vkb::core::descriptor_set& request_descriptor_set(vkb::core::descriptor_set_layout& descriptor_set_layout,
                                                             const BindingMap<vk::DescriptorBufferInfo>& buffer_infos,
                                                             const BindingMap<vk::DescriptorImageInfo>& image_infos);
@@ -83,7 +83,7 @@ namespace vkb
                                                                          const std::vector<vkb::core::shader_module*>& shader_modules,
                                                                          const std::vector<vkb::core::shader_resource>& set_resources);
         vkb::core::framebuffer& request_framebuffer(const vkb::rendering::render_target& render_target, const vkb::core::render_pass& render_pass);
-        vkb::core::graphics_pipeline& request_graphics_pipeline(vkb::rendering::HPPPipelineState& pipeline_state);
+        vkb::core::graphics_pipeline& request_graphics_pipeline(vkb::rendering::pipeline_state& pipeline_state);
         vkb::core::pipeline_layout& request_pipeline_layout(const std::vector<vkb::core::shader_module*>& shader_modules);
         vkb::core::render_pass& request_render_pass(const std::vector<vkb::rendering::attachment>& attachments,
                                                       const std::vector<vkb::common::load_store_info>& load_store_infos,

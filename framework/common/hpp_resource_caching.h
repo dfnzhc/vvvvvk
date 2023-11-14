@@ -235,9 +235,9 @@ namespace std
     };
 
     template <>
-    struct hash<vkb::rendering::HPPPipelineState>
+    struct hash<vkb::rendering::pipeline_state>
     {
-        size_t operator()(const vkb::rendering::HPPPipelineState& pipeline_state) const
+        size_t operator()(const vkb::rendering::pipeline_state& pipeline_state) const
         {
             return std::hash<vkb::PipelineState>()(reinterpret_cast<vkb::PipelineState const&>(pipeline_state));
         }

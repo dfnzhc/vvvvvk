@@ -53,7 +53,7 @@ namespace vkb
         using vkb::ResourceRecord::get_data;
         using vkb::ResourceRecord::set_data;
 
-        size_t register_graphics_pipeline(vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState& pipeline_state)
+        size_t register_graphics_pipeline(vk::PipelineCache pipeline_cache, vkb::rendering::pipeline_state& pipeline_state)
         {
             return vkb::ResourceRecord::register_graphics_pipeline(static_cast<VkPipelineCache>(pipeline_cache),
                                                                    reinterpret_cast<vkb::PipelineState&>(pipeline_state));

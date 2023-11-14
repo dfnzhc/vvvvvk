@@ -37,7 +37,7 @@ namespace vkb
             std::vector<light> directional_lights;
             std::vector<light> point_lights;
             std::vector<light> spot_lights;
-            vkb::HPPBufferAllocation light_buffer;
+            vkb::buffer_allocation light_buffer;
         };
 
         /**

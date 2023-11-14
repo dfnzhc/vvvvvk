@@ -99,7 +99,7 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 
 	// Dimensions
 	ImGuiIO    &io             = ImGui::GetIO();
-	auto const &extent         = sample.get_render_context().get_surface_extent();
+	auto const &extent         = sample.get_render_context().surface_extent();
 	io.DisplaySize.x           = static_cast<float>(extent.width);
 	io.DisplaySize.y           = static_cast<float>(extent.height);
 	io.FontGlobalScale         = 1.0f;
@@ -330,7 +330,7 @@ void HPPGui::update(const float delta_time)
 
 	// Update imGui
 	ImGuiIO &io     = ImGui::GetIO();
-	auto     extent = sample.get_render_context().get_surface_extent();
+	auto     extent = sample.get_render_context().surface_extent();
 	resize(extent.width, extent.height);
 	io.DeltaTime = delta_time;
 
@@ -393,7 +393,7 @@ bool HPPGui::update_buffers()
 void HPPGui::update_buffers(vkb::core::command_buffer &command_buffer) const
 {
 	ImDrawData                     *draw_data    = ImGui::GetDrawData();
-	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
+	vkb::rendering::render_frame &render_frame = sample.get_render_context().active_frame();
 
 	if (!draw_data || (draw_data->TotalVtxCount == 0) || (draw_data->TotalIdxCount == 0))
 	{
@@ -413,15 +413,15 @@ void HPPGui::update_buffers(vkb::core::command_buffer &command_buffer) const
 	vertex_allocation.update(vertex_data);
 
 	std::vector<std::reference_wrapper<const core::HPPBuffer>> buffers;
-	buffers.emplace_back(std::ref(vertex_allocation.get_buffer()));
+	buffers.emplace_back(std::ref(vertex_allocation.buffer()));
 
-	command_buffer.bind_vertex_buffers(0, buffers, {vertex_allocation.get_offset()});
+	command_buffer.bind_vertex_buffers(0, buffers, {vertex_allocation.offset()});
 
 	auto index_allocation = render_frame.allocate_buffer(vk::BufferUsageFlagBits::eIndexBuffer, index_buffer_size);
 
 	index_allocation.update(index_data);
 
-	command_buffer.bind_index_buffer(index_allocation.get_buffer(), index_allocation.get_offset(), vk::IndexType::eUint16);
+	command_buffer.bind_index_buffer(index_allocation.buffer(), index_allocation.offset(), vk::IndexType::eUint16);
 }
 
 void HPPGui::resize(uint32_t width, uint32_t height) const
@@ -457,30 +457,30 @@ void HPPGui::draw(vkb::core::command_buffer &command_buffer)
 	// Location 2: Color
 	vk::VertexInputAttributeDescription col_attr(2, 0, vk::Format::eR8G8B8A8Unorm, to_u32(offsetof(ImDrawVert, col)));
 
-	vkb::rendering::HPPVertexInputState vertex_input_state;
+	vkb::rendering::vertex_input_state vertex_input_state;
 	vertex_input_state.bindings   = {vertex_input_binding};
 	vertex_input_state.attributes = {pos_attr, uv_attr, col_attr};
 
 	command_buffer.set_vertex_input_state(vertex_input_state);
 
 	// Blend state
-	vkb::rendering::HPPColorBlendAttachmentState color_attachment;
+	vkb::rendering::color_blend_attachment_state color_attachment;
 	color_attachment.blend_enable           = true;
 	color_attachment.color_write_mask       = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB;
 	color_attachment.src_color_blend_factor = vk::BlendFactor::eSrcAlpha;
 	color_attachment.dst_color_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha;
 	color_attachment.src_alpha_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha;
 
-	vkb::rendering::HPPColorBlendState blend_state{};
+	vkb::rendering::color_blend_state blend_state{};
 	blend_state.attachments = {color_attachment};
 
 	command_buffer.set_color_blend_state(blend_state);
 
-	vkb::rendering::HPPRasterizationState rasterization_state{};
+	vkb::rendering::rasterization_state rasterization_state{};
 	rasterization_state.cull_mode = vk::CullModeFlagBits::eNone;
 	command_buffer.set_rasterization_state(rasterization_state);
 
-	vkb::rendering::HPPDepthStencilState depth_state{};
+	vkb::rendering::depth_stencil_state depth_state{};
 	depth_state.depth_test_enable  = false;
 	depth_state.depth_write_enable = false;
 	command_buffer.set_depth_stencil_state(depth_state);
@@ -496,7 +496,7 @@ void HPPGui::draw(vkb::core::command_buffer &command_buffer)
 
 	if (sample.get_render_context().has_swapchain())
 	{
-		auto transform = sample.get_render_context().get_swapchain().transform();
+		auto transform = sample.get_render_context().swapchain().transform();
 
 		glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
 		if (transform & vk::SurfaceTransformFlagBitsKHR::eRotate90)
@@ -559,7 +559,7 @@ void HPPGui::draw(vkb::core::command_buffer &command_buffer)
 			// Adjust for pre-rotation if necessary
 			if (sample.get_render_context().has_swapchain())
 			{
-				auto transform = sample.get_render_context().get_swapchain().transform();
+				auto transform = sample.get_render_context().swapchain().transform();
 				if (transform & vk::SurfaceTransformFlagBitsKHR::eRotate90)
 				{
 					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);

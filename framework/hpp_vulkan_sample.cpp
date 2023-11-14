@@ -47,12 +47,12 @@ namespace vkb
         instance.reset();
     }
 
-    void HPPVulkanSample::set_render_pipeline(vkb::rendering::HPPRenderPipeline&& rp)
+    void HPPVulkanSample::set_render_pipeline(vkb::rendering::render_pipeline&& rp)
     {
-        render_pipeline = std::make_unique<vkb::rendering::HPPRenderPipeline>(std::move(rp));
+        render_pipeline = std::make_unique<vkb::rendering::render_pipeline>(std::move(rp));
     }
 
-    vkb::rendering::HPPRenderPipeline const& HPPVulkanSample::get_render_pipeline() const
+    vkb::rendering::render_pipeline const& HPPVulkanSample::get_render_pipeline() const
     {
         assert(render_pipeline && "Render pipeline was not created");
         return *render_pipeline;
@@ -199,7 +199,7 @@ namespace vkb
         std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eImmediate};
 #endif
 
-        render_context = std::make_unique<vkb::rendering::HPPRenderContext>(*get_device(), surface, *window, present_mode, present_mode_priority_list, surface_priority_list);
+        render_context = std::make_unique<vkb::rendering::render_context>(*get_device(), surface, *window, present_mode, present_mode_priority_list, surface_priority_list);
     }
 
     void HPPVulkanSample::prepare_render_context()
@@ -287,7 +287,7 @@ namespace vkb
         command_buffer.begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
         stats->begin_sampling(command_buffer);
 
-        draw(command_buffer, render_context->get_active_frame().get_render_target());
+        draw(command_buffer, render_context->active_frame().get_render_target());
 
         stats->end_sampling(command_buffer);
         command_buffer.end();
@@ -362,7 +362,7 @@ namespace vkb
     {
         if (render_pipeline)
         {
-            render_pipeline->draw(command_buffer, render_context->get_active_frame().get_render_target());
+            render_pipeline->draw(command_buffer, render_context->active_frame().get_render_target());
         }
     }
 
@@ -466,10 +466,10 @@ namespace vkb
 
         get_debug_info().insert<field::Static, std::string>("driver_version", driver_version_str);
         get_debug_info().insert<field::Static, std::string>("resolution",
-                                                            to_string(static_cast<VkExtent2D const&>(render_context->get_swapchain().extent())));
+                                                            to_string(static_cast<VkExtent2D const&>(render_context->swapchain().extent())));
         get_debug_info().insert<field::Static, std::string>("surface_format",
-                                                            to_string(render_context->get_swapchain().format()) + " (" +
-                                                            to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().format())) +
+                                                            to_string(render_context->swapchain().format()) + " (" +
+                                                            to_string(vkb::common::get_bits_per_pixel(render_context->swapchain().format())) +
                                                             "bpp)");
 
         if (scene != nullptr)
@@ -496,7 +496,7 @@ namespace vkb
 
     void HPPVulkanSample::load_scene(const std::string& path)
     {
-        vkb::HPPGLTFLoader loader(*device);
+        vkb::gltf_loader loader(*device);
 
         scene = loader.read_scene_from_file(path);
 
@@ -512,7 +512,7 @@ namespace vkb
         return surface;
     }
 
-    vkb::rendering::HPPRenderContext& HPPVulkanSample::get_render_context()
+    vkb::rendering::render_context& HPPVulkanSample::get_render_context()
     {
         assert(render_context && "Render context is not valid");
         return *render_context;
