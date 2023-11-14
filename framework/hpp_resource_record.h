@@ -34,12 +34,12 @@ namespace vkb
 
     namespace core
     {
-        class HPPPipelineLayout;
-        class HPPRenderPass;
+        class pipeline_layout;
+        class render_pass;
         class shader_module;
         class shader_source;
         class shader_variant;
-        struct HPPSubpassInfo;
+        struct subpass_info;
     } // namespace core
 
     /**
@@ -66,7 +66,7 @@ namespace vkb
 
         size_t register_render_pass(const std::vector<vkb::rendering::attachment>& attachments,
                                     const std::vector<vkb::common::HPPLoadStoreInfo>& load_store_infos,
-                                    const std::vector<vkb::core::HPPSubpassInfo>& subpasses)
+                                    const std::vector<vkb::core::subpass_info>& subpasses)
         {
             return vkb::ResourceRecord::register_render_pass(reinterpret_cast<std::vector<vkb::Attachment> const&>(attachments),
                                                              reinterpret_cast<std::vector<vkb::LoadStoreInfo> const&>(load_store_infos),
@@ -84,17 +84,17 @@ namespace vkb
                                                                reinterpret_cast<vkb::ShaderVariant const&>(shader_variant));
         }
 
-        void set_graphics_pipeline(size_t index, const vkb::core::HPPGraphicsPipeline& graphics_pipeline)
+        void set_graphics_pipeline(size_t index, const vkb::core::graphics_pipeline& graphics_pipeline)
         {
             vkb::ResourceRecord::set_graphics_pipeline(index, reinterpret_cast<vkb::GraphicsPipeline const&>(graphics_pipeline));
         }
 
-        void set_pipeline_layout(size_t index, const vkb::core::HPPPipelineLayout& pipeline_layout)
+        void set_pipeline_layout(size_t index, const vkb::core::pipeline_layout& pipeline_layout)
         {
             vkb::ResourceRecord::set_pipeline_layout(index, reinterpret_cast<vkb::PipelineLayout const&>(pipeline_layout));
         }
 
-        void set_render_pass(size_t index, const vkb::core::HPPRenderPass& render_pass)
+        void set_render_pass(size_t index, const vkb::core::render_pass& render_pass)
         {
             vkb::ResourceRecord::set_render_pass(index, reinterpret_cast<vkb::RenderPass const&>(render_pass));
         }

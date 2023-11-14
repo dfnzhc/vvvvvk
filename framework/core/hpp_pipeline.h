@@ -21,53 +21,55 @@
 
 namespace vkb
 {
-namespace rendering
-{
-class HPPPipelineState;
-}
+    namespace rendering
+    {
+        class HPPPipelineState;
+    }
 
-namespace core
-{
-/**
- * @brief facade class around vkb::Pipeline, providing a vulkan.hpp-based interface
- *
- * See vkb::Pipeline for documentation
- */
-class HPPPipeline : private vkb::Pipeline
-{
-  public:
-	vk::Pipeline get_handle() const
-	{
-		return static_cast<vk::Pipeline>(vkb::Pipeline::get_handle());
-	}
-};
+    namespace core
+    {
+        /**
+         * @brief facade class around vkb::Pipeline, providing a vulkan.hpp-based interface
+         *
+         * See vkb::Pipeline for documentation
+         */
+        class pipeline : private vkb::Pipeline
+        {
+        public:
+            vk::Pipeline handle() const
+            {
+                return static_cast<vk::Pipeline>(vkb::Pipeline::get_handle());
+            }
+        };
 
-class HPPComputePipeline : private vkb::ComputePipeline
-{
-  public:
-	HPPComputePipeline(vkb::core::device &device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState &pipeline_state) :
-	    vkb::ComputePipeline(
-	        reinterpret_cast<vkb::Device &>(device), static_cast<VkPipelineCache>(pipeline_cache), reinterpret_cast<vkb::PipelineState &>(pipeline_state))
-	{}
+        class compute_pipeline : private vkb::ComputePipeline
+        {
+        public:
+            compute_pipeline(vkb::core::device& device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState& pipeline_state) :
+                vkb::ComputePipeline(
+                    reinterpret_cast<vkb::Device&>(device), static_cast<VkPipelineCache>(pipeline_cache), reinterpret_cast<vkb::PipelineState&>(pipeline_state))
+            {
+            }
 
-	vk::Pipeline get_handle() const
-	{
-		return static_cast<vk::Pipeline>(vkb::ComputePipeline::get_handle());
-	}
-};
+            vk::Pipeline get_handle() const
+            {
+                return static_cast<vk::Pipeline>(vkb::ComputePipeline::get_handle());
+            }
+        };
 
-class HPPGraphicsPipeline : private vkb::GraphicsPipeline
-{
-  public:
-	HPPGraphicsPipeline(vkb::core::device &device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState &pipeline_state) :
-	    vkb::GraphicsPipeline(
-	        reinterpret_cast<vkb::Device &>(device), static_cast<VkPipelineCache>(pipeline_cache), reinterpret_cast<vkb::PipelineState &>(pipeline_state))
-	{}
+        class graphics_pipeline : private vkb::GraphicsPipeline
+        {
+        public:
+            graphics_pipeline(vkb::core::device& device, vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState& pipeline_state) :
+                vkb::GraphicsPipeline(
+                    reinterpret_cast<vkb::Device&>(device), static_cast<VkPipelineCache>(pipeline_cache), reinterpret_cast<vkb::PipelineState&>(pipeline_state))
+            {
+            }
 
-	vk::Pipeline get_handle() const
-	{
-		return static_cast<vk::Pipeline>(vkb::GraphicsPipeline::get_handle());
-	}
-};
-}        // namespace core
-}        // namespace vkb
+            vk::Pipeline get_handle() const
+            {
+                return static_cast<vk::Pipeline>(vkb::GraphicsPipeline::get_handle());
+            }
+        };
+    } // namespace core
+} // namespace vkb

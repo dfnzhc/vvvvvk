@@ -74,7 +74,7 @@ vk::Result HPPCommandBuffer::begin(vk::CommandBufferUsageFlags flags, HPPCommand
 	return begin(flags, nullptr, nullptr, 0);
 }
 
-vk::Result HPPCommandBuffer::begin(vk::CommandBufferUsageFlags flags, const vkb::core::HPPRenderPass *render_pass, const vkb::core::HPPFramebuffer *framebuffer, uint32_t subpass_index)
+vk::Result HPPCommandBuffer::begin(vk::CommandBufferUsageFlags flags, const vkb::core::render_pass *render_pass, const vkb::core::framebuffer *framebuffer, uint32_t subpass_index)
 {
 	// Reset state
 	pipeline_state.reset();
@@ -93,7 +93,7 @@ vk::Result HPPCommandBuffer::begin(vk::CommandBufferUsageFlags flags, const vkb:
 		current_render_pass.framebuffer = framebuffer;
 
 		inheritance.renderPass  = current_render_pass.render_pass->get_handle();
-		inheritance.framebuffer = current_render_pass.framebuffer->get_handle();
+		inheritance.framebuffer = current_render_pass.framebuffer->handle();
 		inheritance.subpass     = subpass_index;
 
 		begin_info.pInheritanceInfo = &inheritance;
@@ -126,8 +126,8 @@ void HPPCommandBuffer::begin_render_pass(const vkb::rendering::render_target    
 }
 
 void HPPCommandBuffer::begin_render_pass(const vkb::rendering::render_target &render_target,
-                                         const vkb::core::HPPRenderPass        &render_pass,
-                                         const vkb::core::HPPFramebuffer       &framebuffer,
+                                         const vkb::core::render_pass        &render_pass,
+                                         const vkb::core::framebuffer       &framebuffer,
                                          const std::vector<vk::ClearValue>     &clear_values,
                                          vk::SubpassContents                    contents)
 {
@@ -136,9 +136,9 @@ void HPPCommandBuffer::begin_render_pass(const vkb::rendering::render_target &re
 
 	// Begin render pass
 	vk::RenderPassBeginInfo begin_info(
-	    current_render_pass.render_pass->get_handle(), current_render_pass.framebuffer->get_handle(), {{}, render_target.extent()}, clear_values);
+	    current_render_pass.render_pass->get_handle(), current_render_pass.framebuffer->handle(), {{}, render_target.extent()}, clear_values);
 
-	const auto &framebuffer_extent = current_render_pass.framebuffer->get_extent();
+	const auto &framebuffer_extent = current_render_pass.framebuffer->extent();
 
 	// Test the requested render area to confirm that it is optimal and could not cause a performance reduction
 	if (!is_render_size_optimal(framebuffer_extent, begin_info.renderArea))
@@ -197,7 +197,7 @@ void HPPCommandBuffer::bind_lighting(vkb::rendering::HPPLightingState &lighting_
 	set_specialization_constant(2, to_u32(lighting_state.spot_lights.size()));
 }
 
-void HPPCommandBuffer::bind_pipeline_layout(vkb::core::HPPPipelineLayout &pipeline_layout)
+void HPPCommandBuffer::bind_pipeline_layout(vkb::core::pipeline_layout &pipeline_layout)
 {
 	pipeline_state.set_pipeline_layout(pipeline_layout);
 }
@@ -323,14 +323,14 @@ void HPPCommandBuffer::execute_commands(std::vector<HPPCommandBuffer *> &seconda
 	get_handle().executeCommands(sec_cmd_buf_handles);
 }
 
-vkb::core::HPPRenderPass &HPPCommandBuffer::get_render_pass(const vkb::rendering::render_target                          &render_target,
+vkb::core::render_pass &HPPCommandBuffer::get_render_pass(const vkb::rendering::render_target                          &render_target,
                                                             const std::vector<vkb::common::HPPLoadStoreInfo>               &load_store_infos,
                                                             const std::vector<std::unique_ptr<vkb::rendering::HPPSubpass>> &subpasses)
 {
 	// Create render pass
 	assert(subpasses.size() > 0 && "Cannot create a render pass without any subpass");
 
-	std::vector<vkb::core::HPPSubpassInfo> subpass_infos(subpasses.size());
+	std::vector<vkb::core::subpass_info> subpass_infos(subpasses.size());
 	auto                                   subpass_info_it = subpass_infos.begin();
 	for (auto &subpass : subpasses)
 	{
@@ -536,7 +536,7 @@ void HPPCommandBuffer::flush_descriptor_state(vk::PipelineBindPoint pipeline_bin
 
 	// Iterate over the shader sets to check if they have already been bound
 	// If they have, add the set so that the command buffer later updates it
-	for (auto &set_it : pipeline_layout.get_shader_sets())
+	for (auto &set_it : pipeline_layout.shader_sets())
 	{
 		uint32_t descriptor_set_id = set_it.first;
 
@@ -544,7 +544,7 @@ void HPPCommandBuffer::flush_descriptor_state(vk::PipelineBindPoint pipeline_bin
 
 		if (descriptor_set_layout_it != descriptor_set_layout_binding_state.end())
 		{
-			if (descriptor_set_layout_it->second->get_handle() != pipeline_layout.get_descriptor_set_layout(descriptor_set_id).get_handle())
+			if (descriptor_set_layout_it->second->get_handle() != pipeline_layout.descriptor_set_layout(descriptor_set_id).get_handle())
 			{
 				update_descriptor_sets.emplace(descriptor_set_id);
 			}
@@ -590,7 +590,7 @@ void HPPCommandBuffer::flush_descriptor_state(vk::PipelineBindPoint pipeline_bin
 				continue;
 			}
 
-			auto &descriptor_set_layout = pipeline_layout.get_descriptor_set_layout(descriptor_set_id);
+			auto &descriptor_set_layout = pipeline_layout.descriptor_set_layout(descriptor_set_id);
 
 			// Make descriptor set layout bound for current set
 			descriptor_set_layout_binding_state[descriptor_set_id] = &descriptor_set_layout;
@@ -674,7 +674,7 @@ void HPPCommandBuffer::flush_descriptor_state(vk::PipelineBindPoint pipeline_bin
 			    descriptor_set_layout, buffer_infos, image_infos, update_after_bind, command_pool.get_thread_index());
 
 			// Bind descriptor set
-			get_handle().bindDescriptorSets(pipeline_bind_point, pipeline_layout.get_handle(), descriptor_set_id, descriptor_set_handle, dynamic_offsets);
+			get_handle().bindDescriptorSets(pipeline_bind_point, pipeline_layout.handle(), descriptor_set_id, descriptor_set_handle, dynamic_offsets);
 		}
 	}
 }
@@ -716,13 +716,13 @@ void HPPCommandBuffer::flush_push_constants()
 		return;
 	}
 
-	const vkb::core::HPPPipelineLayout &pipeline_layout = pipeline_state.get_pipeline_layout();
+	const vkb::core::pipeline_layout &pipeline_layout = pipeline_state.get_pipeline_layout();
 
-	vk::ShaderStageFlags shader_stage = pipeline_layout.get_push_constant_range_stage(to_u32(stored_push_constants.size()));
+	vk::ShaderStageFlags shader_stage = pipeline_layout.push_constant_range_stage(to_u32(stored_push_constants.size()));
 
 	if (shader_stage)
 	{
-		get_handle().pushConstants<uint8_t>(pipeline_layout.get_handle(), shader_stage, 0, stored_push_constants);
+		get_handle().pushConstants<uint8_t>(pipeline_layout.handle(), shader_stage, 0, stored_push_constants);
 	}
 	else
 	{

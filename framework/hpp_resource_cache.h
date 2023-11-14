@@ -46,14 +46,14 @@ namespace vkb
     struct resource_cache_state
     {
         std::unordered_map<std::size_t, vkb::core::shader_module> shader_modules;
-        std::unordered_map<std::size_t, vkb::core::HPPPipelineLayout> pipeline_layouts;
+        std::unordered_map<std::size_t, vkb::core::pipeline_layout> pipeline_layouts;
         std::unordered_map<std::size_t, vkb::core::descriptor_set_layout> descriptor_set_layouts;
         std::unordered_map<std::size_t, vkb::core::descriptor_pool> descriptor_pools;
-        std::unordered_map<std::size_t, vkb::core::HPPRenderPass> render_passes;
-        std::unordered_map<std::size_t, vkb::core::HPPGraphicsPipeline> graphics_pipelines;
-        std::unordered_map<std::size_t, vkb::core::HPPComputePipeline> compute_pipelines;
-        std::unordered_map<std::size_t, vkb::core::HPPDescriptorSet> descriptor_sets;
-        std::unordered_map<std::size_t, vkb::core::HPPFramebuffer> framebuffers;
+        std::unordered_map<std::size_t, vkb::core::render_pass> render_passes;
+        std::unordered_map<std::size_t, vkb::core::graphics_pipeline> graphics_pipelines;
+        std::unordered_map<std::size_t, vkb::core::compute_pipeline> compute_pipelines;
+        std::unordered_map<std::size_t, vkb::core::descriptor_set> descriptor_sets;
+        std::unordered_map<std::size_t, vkb::core::framebuffer> framebuffers;
     };
 
     /**
@@ -75,27 +75,24 @@ namespace vkb
         void clear_framebuffers();
         void clear_pipelines();
         const resource_cache_state& get_internal_state() const;
-        vkb::core::HPPComputePipeline& request_compute_pipeline(vkb::rendering::HPPPipelineState& pipeline_state);
-        vkb::core::HPPDescriptorSet& request_descriptor_set(vkb::core::descriptor_set_layout& descriptor_set_layout,
+        vkb::core::compute_pipeline& request_compute_pipeline(vkb::rendering::HPPPipelineState& pipeline_state);
+        vkb::core::descriptor_set& request_descriptor_set(vkb::core::descriptor_set_layout& descriptor_set_layout,
                                                             const BindingMap<vk::DescriptorBufferInfo>& buffer_infos,
                                                             const BindingMap<vk::DescriptorImageInfo>& image_infos);
         vkb::core::descriptor_set_layout& request_descriptor_set_layout(const uint32_t set_index,
                                                                          const std::vector<vkb::core::shader_module*>& shader_modules,
-                                                                         const std::vector<vkb::core::HPPShaderResource>& set_resources);
-        vkb::core::HPPFramebuffer& request_framebuffer(const vkb::rendering::render_target& render_target, const vkb::core::HPPRenderPass& render_pass);
-        vkb::core::HPPGraphicsPipeline& request_graphics_pipeline(vkb::rendering::HPPPipelineState& pipeline_state);
-        vkb::core::HPPPipelineLayout& request_pipeline_layout(const std::vector<vkb::core::shader_module*>& shader_modules);
-        vkb::core::HPPRenderPass& request_render_pass(const std::vector<vkb::rendering::attachment>& attachments,
+                                                                         const std::vector<vkb::core::shader_resource>& set_resources);
+        vkb::core::framebuffer& request_framebuffer(const vkb::rendering::render_target& render_target, const vkb::core::render_pass& render_pass);
+        vkb::core::graphics_pipeline& request_graphics_pipeline(vkb::rendering::HPPPipelineState& pipeline_state);
+        vkb::core::pipeline_layout& request_pipeline_layout(const std::vector<vkb::core::shader_module*>& shader_modules);
+        vkb::core::render_pass& request_render_pass(const std::vector<vkb::rendering::attachment>& attachments,
                                                       const std::vector<vkb::common::HPPLoadStoreInfo>& load_store_infos,
-                                                      const std::vector<vkb::core::HPPSubpassInfo>& subpasses);
+                                                      const std::vector<vkb::core::subpass_info>& subpasses);
         vkb::core::shader_module& request_shader_module(
             vk::ShaderStageFlagBits stage, const vkb::core::shader_source& glsl_source, const vkb::core::shader_variant& shader_variant = {});
         std::vector<uint8_t> serialize();
         void set_pipeline_cache(vk::PipelineCache pipeline_cache);
 
-        /// @brief Update those descriptor sets referring to old views
-        /// @param old_views Old image views referred by descriptor sets
-        /// @param new_views New image views to be referred
         void update_descriptor_sets(const std::vector<vkb::core::image_view>& old_views, const std::vector<vkb::core::image_view>& new_views);
 
         void warmup(const std::vector<uint8_t>& data);

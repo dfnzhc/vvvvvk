@@ -85,16 +85,16 @@ struct hash<vkb::core::descriptor_pool>
 };
 
 template <>
-struct hash<vkb::core::HPPDescriptorSet>
+struct hash<vkb::core::descriptor_set>
 {
-	size_t operator()(vkb::core::HPPDescriptorSet &descriptor_set) const
+	size_t operator()(vkb::core::descriptor_set &descriptor_set) const
 	{
 		size_t result = 0;
-		vkb::hash_combine(result, descriptor_set.get_layout());
+		vkb::hash_combine(result, descriptor_set.layout());
 		// descriptor_pool ?
-		vkb::hash_combine(result, descriptor_set.get_buffer_infos());
-		vkb::hash_combine(result, descriptor_set.get_image_infos());
-		vkb::hash_combine(result, descriptor_set.get_handle());
+		vkb::hash_combine(result, descriptor_set.buffer_infos());
+		vkb::hash_combine(result, descriptor_set.image_infos());
+		vkb::hash_combine(result, descriptor_set.handle());
 		// write_descriptor_sets ?
 
 		return result;
@@ -143,9 +143,9 @@ struct hash<vkb::core::image_view>
 };
 
 template <>
-struct hash<vkb::core::HPPRenderPass>
+struct hash<vkb::core::render_pass>
 {
-	size_t operator()(const vkb::core::HPPRenderPass &render_pass) const
+	size_t operator()(const vkb::core::render_pass &render_pass) const
 	{
 		return std::hash<vkb::RenderPass>()(reinterpret_cast<vkb::RenderPass const &>(render_pass));
 	}
@@ -161,9 +161,9 @@ struct hash<vkb::core::shader_module>
 };
 
 template <>
-struct hash<vkb::core::HPPShaderResource>
+struct hash<vkb::core::shader_resource>
 {
-	size_t operator()(vkb::core::HPPShaderResource const &shader_resource) const
+	size_t operator()(vkb::core::shader_resource const &shader_resource) const
 	{
 		size_t result = 0;
 		vkb::hash_combine(result, shader_resource.stages);
@@ -204,9 +204,9 @@ struct hash<vkb::core::shader_variant>
 };
 
 template <>
-struct hash<vkb::core::HPPSubpassInfo>
+struct hash<vkb::core::subpass_info>
 {
-	size_t operator()(vkb::core::HPPSubpassInfo const &subpass_info) const
+	size_t operator()(vkb::core::subpass_info const &subpass_info) const
 	{
 		size_t result = 0;
 		vkb::hash_combine(result, subpass_info.input_attachments);
@@ -307,42 +307,42 @@ struct HPPRecordHelper<vkb::core::shader_module, A...>
 };
 
 template <class... A>
-struct HPPRecordHelper<vkb::core::HPPPipelineLayout, A...>
+struct HPPRecordHelper<vkb::core::pipeline_layout, A...>
 {
 	size_t record(resource_record &recorder, A &...args)
 	{
 		return recorder.register_pipeline_layout(args...);
 	}
 
-	void index(resource_record &recorder, size_t index, vkb::core::HPPPipelineLayout &pipeline_layout)
+	void index(resource_record &recorder, size_t index, vkb::core::pipeline_layout &pipeline_layout)
 	{
 		recorder.set_pipeline_layout(index, pipeline_layout);
 	}
 };
 
 template <class... A>
-struct HPPRecordHelper<vkb::core::HPPRenderPass, A...>
+struct HPPRecordHelper<vkb::core::render_pass, A...>
 {
 	size_t record(resource_record &recorder, A &...args)
 	{
 		return recorder.register_render_pass(args...);
 	}
 
-	void index(resource_record &recorder, size_t index, vkb::core::HPPRenderPass &render_pass)
+	void index(resource_record &recorder, size_t index, vkb::core::render_pass &render_pass)
 	{
 		recorder.set_render_pass(index, render_pass);
 	}
 };
 
 template <class... A>
-struct HPPRecordHelper<vkb::core::HPPGraphicsPipeline, A...>
+struct HPPRecordHelper<vkb::core::graphics_pipeline, A...>
 {
 	size_t record(resource_record &recorder, A &...args)
 	{
 		return recorder.register_graphics_pipeline(args...);
 	}
 
-	void index(resource_record &recorder, size_t index, vkb::core::HPPGraphicsPipeline &graphics_pipeline)
+	void index(resource_record &recorder, size_t index, vkb::core::graphics_pipeline &graphics_pipeline)
 	{
 		recorder.set_graphics_pipeline(index, graphics_pipeline);
 	}

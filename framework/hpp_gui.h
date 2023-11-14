@@ -427,7 +427,7 @@ class HPPGui
 	std::unique_ptr<vkb::core::image>     font_image;
 	std::unique_ptr<vkb::core::image_view> font_image_view;
 	std::unique_ptr<vkb::core::HPPSampler>   sampler;
-	vkb::core::HPPPipelineLayout            *pipeline_layout = nullptr;
+	vkb::core::pipeline_layout            *pipeline_layout = nullptr;
 	StatsView                                stats_view;
 	DebugView                                debug_view;
 	vk::DescriptorPool                       descriptor_pool       = nullptr;

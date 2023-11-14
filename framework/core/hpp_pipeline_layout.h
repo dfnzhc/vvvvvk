@@ -23,42 +23,42 @@
 
 namespace vkb
 {
-namespace core
-{
-class device;
-class descriptor_set_layout;
+    namespace core
+    {
+        class device;
+        class descriptor_set_layout;
 
-/**
- * @brief A wrapper class for vk::HPPPipelineLayout
- *
- */
-class HPPPipelineLayout
-{
-  public:
-	HPPPipelineLayout(vkb::core::device &device, const std::vector<vkb::core::shader_module *> &shader_modules);
-	HPPPipelineLayout(const HPPPipelineLayout &) = delete;
-	HPPPipelineLayout(HPPPipelineLayout &&other);
-	~HPPPipelineLayout();
+        /**
+         * @brief A wrapper class for vk::HPPPipelineLayout
+         *
+         */
+        class pipeline_layout
+        {
+        public:
+            pipeline_layout(vkb::core::device& device, const std::vector<vkb::core::shader_module*>& shader_modules);
+            pipeline_layout(pipeline_layout&& other);
+            ~pipeline_layout();
 
-	HPPPipelineLayout &operator=(const HPPPipelineLayout &) = delete;
-	HPPPipelineLayout &operator=(HPPPipelineLayout &&)      = delete;
+            pipeline_layout(const pipeline_layout&) = delete;
+            pipeline_layout& operator=(const pipeline_layout&) = delete;
+            pipeline_layout& operator=(pipeline_layout&&) = delete;
 
-	vkb::core::descriptor_set_layout const                                       &get_descriptor_set_layout(const uint32_t set_index) const;
-	vk::PipelineLayout                                                             get_handle() const;
-	vk::ShaderStageFlags                                                           get_push_constant_range_stage(uint32_t size, uint32_t offset = 0) const;
-	std::vector<vkb::core::HPPShaderResource>                                      get_resources(const vkb::core::HPPShaderResourceType &type  = vkb::core::HPPShaderResourceType::All,
-	                                                                                             vk::ShaderStageFlagBits                 stage = vk::ShaderStageFlagBits::eAll) const;
-	const std::vector<vkb::core::shader_module *>                               &get_shader_modules() const;
-	const std::unordered_map<uint32_t, std::vector<vkb::core::HPPShaderResource>> &get_shader_sets() const;
-	bool                                                                           has_descriptor_set_layout(const uint32_t set_index) const;
+            vkb::core::descriptor_set_layout const& descriptor_set_layout(const uint32_t set_index) const;
+            vk::PipelineLayout handle() const;
+            vk::ShaderStageFlags push_constant_range_stage(uint32_t size, uint32_t offset = 0) const;
+            std::vector<vkb::core::shader_resource> resources(const vkb::core::shader_resource_type& type = vkb::core::shader_resource_type::All,
+                                                                vk::ShaderStageFlagBits stage = vk::ShaderStageFlagBits::eAll) const;
+            const std::vector<vkb::core::shader_module*>& shader_modules() const;
+            const std::unordered_map<uint32_t, std::vector<vkb::core::shader_resource>>& shader_sets() const;
+            bool has_descriptor_set_layout(const uint32_t set_index) const;
 
-  private:
-	vkb::core::device                                                   &device;
-	vk::PipelineLayout                                                      handle;
-	std::vector<vkb::core::shader_module *>                               shader_modules;                // The shader modules that this pipeline layout uses
-	std::unordered_map<std::string, vkb::core::HPPShaderResource>           shader_resources;              // The shader resources that this pipeline layout uses, indexed by their name
-	std::unordered_map<uint32_t, std::vector<vkb::core::HPPShaderResource>> shader_sets;                   // A map of each set and the resources it owns used by the pipeline layout
-	std::vector<vkb::core::descriptor_set_layout *>                        descriptor_set_layouts;        // The different descriptor set layouts for this pipeline layout
-};
-}        // namespace core
-}        // namespace vkb
+        private:
+            vkb::core::device& device_;
+            vk::PipelineLayout handle_;
+            std::vector<vkb::core::shader_module*> shader_modules_;
+            std::unordered_map<std::string, vkb::core::shader_resource> shader_resources_;
+            std::unordered_map<uint32_t, std::vector<vkb::core::shader_resource>> shader_sets_;
+            std::vector<vkb::core::descriptor_set_layout*> descriptor_set_layouts_;
+        };
+    } // namespace core
+} // namespace vkb

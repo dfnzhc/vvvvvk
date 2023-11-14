@@ -41,8 +41,8 @@ class HPPCommandBuffer : public core::vk_unit<vk::CommandBuffer>
   public:
 	struct RenderPassBinding
 	{
-		const vkb::core::HPPRenderPass  *render_pass;
-		const vkb::core::HPPFramebuffer *framebuffer;
+		const vkb::core::render_pass  *render_pass;
+		const vkb::core::framebuffer *framebuffer;
 	};
 
 	enum class ResetMode
@@ -81,7 +81,7 @@ class HPPCommandBuffer : public core::vk_unit<vk::CommandBuffer>
 	 * @param subpass_index
 	 * @return Whether it succeeded or not
 	 */
-	vk::Result begin(vk::CommandBufferUsageFlags flags, const vkb::core::HPPRenderPass *render_pass, const vkb::core::HPPFramebuffer *framebuffer, uint32_t subpass_index);
+	vk::Result begin(vk::CommandBufferUsageFlags flags, const vkb::core::render_pass *render_pass, const vkb::core::framebuffer *framebuffer, uint32_t subpass_index);
 
 	void                      begin_query(const vkb::core::HPPQueryPool &query_pool, uint32_t query, vk::QueryControlFlags flags);
 	void                      begin_render_pass(const vkb::rendering::render_target                          &render_target,
@@ -90,8 +90,8 @@ class HPPCommandBuffer : public core::vk_unit<vk::CommandBuffer>
 	                                            const std::vector<std::unique_ptr<vkb::rendering::HPPSubpass>> &subpasses,
 	                                            vk::SubpassContents                                             contents = vk::SubpassContents::eInline);
 	void                      begin_render_pass(const vkb::rendering::render_target &render_target,
-	                                            const vkb::core::HPPRenderPass        &render_pass,
-	                                            const vkb::core::HPPFramebuffer       &framebuffer,
+	                                            const vkb::core::render_pass        &render_pass,
+	                                            const vkb::core::framebuffer       &framebuffer,
 	                                            const std::vector<vk::ClearValue>     &clear_values,
 	                                            vk::SubpassContents                    contents = vk::SubpassContents::eInline);
 	void                      bind_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, vk::DeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
@@ -100,7 +100,7 @@ class HPPCommandBuffer : public core::vk_unit<vk::CommandBuffer>
 	void                      bind_index_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, vk::IndexType index_type);
 	void                      bind_input(const vkb::core::image_view &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 	void                      bind_lighting(vkb::rendering::HPPLightingState &lighting_state, uint32_t set, uint32_t binding);
-	void                      bind_pipeline_layout(vkb::core::HPPPipelineLayout &pipeline_layout);
+	void                      bind_pipeline_layout(vkb::core::pipeline_layout &pipeline_layout);
 	void                      bind_vertex_buffers(uint32_t                                                               first_binding,
 	                                              const std::vector<std::reference_wrapper<const vkb::core::HPPBuffer>> &buffers,
 	                                              const std::vector<vk::DeviceSize>                                     &offsets);
@@ -127,7 +127,7 @@ class HPPCommandBuffer : public core::vk_unit<vk::CommandBuffer>
 	void                      end_render_pass();
 	void                      execute_commands(HPPCommandBuffer &secondary_command_buffer);
 	void                      execute_commands(std::vector<HPPCommandBuffer *> &secondary_command_buffers);
-	vkb::core::HPPRenderPass &get_render_pass(const vkb::rendering::render_target                          &render_target,
+	vkb::core::render_pass &get_render_pass(const vkb::rendering::render_target                          &render_target,
 	                                          const std::vector<vkb::common::HPPLoadStoreInfo>               &load_store_infos,
 	                                          const std::vector<std::unique_ptr<vkb::rendering::HPPSubpass>> &subpasses);
 	void                      image_memory_barrier(const vkb::core::image_view &image_view, const vkb::common::HPPImageMemoryBarrier &memory_barrier) const;

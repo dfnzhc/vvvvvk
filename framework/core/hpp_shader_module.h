@@ -32,7 +32,7 @@ namespace vkb
          */
 
         /// Types of shader resources
-        enum class HPPShaderResourceType
+        enum class shader_resource_type
         {
             Input,
             InputAttachment,
@@ -49,7 +49,7 @@ namespace vkb
         };
 
         /// This determines the type and method of how descriptor set should be created and bound
-        enum class HPPShaderResourceMode
+        enum class shader_resource_mode
         {
             Static,
             Dynamic,
@@ -58,11 +58,11 @@ namespace vkb
 
         /// Store shader resource data.
         /// Used by the shader module.
-        struct HPPShaderResource
+        struct shader_resource
         {
             vk::ShaderStageFlags stages;
-            HPPShaderResourceType type;
-            HPPShaderResourceMode mode;
+            shader_resource_type type;
+            shader_resource_mode mode;
             uint32_t set;
             uint32_t binding;
             uint32_t location;
@@ -109,9 +109,9 @@ namespace vkb
             {
             }
 
-            const std::vector<vkb::core::HPPShaderResource>& get_resources() const
+            const std::vector<vkb::core::shader_resource>& get_resources() const
             {
-                return reinterpret_cast<std::vector<vkb::core::HPPShaderResource> const&>(vkb::ShaderModule::get_resources());
+                return reinterpret_cast<std::vector<vkb::core::shader_resource> const&>(vkb::ShaderModule::get_resources());
             }
         };
     } // namespace core

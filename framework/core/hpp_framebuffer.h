@@ -22,39 +22,40 @@
 
 namespace vkb
 {
-namespace rendering
-{
-class render_target;
-}
+    namespace rendering
+    {
+        class render_target;
+    }
 
-namespace core
-{
-class device;
-class HPPRenderPass;
+    namespace core
+    {
+        class device;
+        class render_pass;
 
-/**
- * @brief facade class around vkb::Framebuffer, providing a vulkan.hpp-based interface
- *
- * See vkb::Framebuffer for documentation
- */
-class HPPFramebuffer : private vkb::Framebuffer
-{
-  public:
-	HPPFramebuffer(vkb::core::device &device, const vkb::rendering::render_target &render_target, const vkb::core::HPPRenderPass &render_pass) :
-	    vkb::Framebuffer(reinterpret_cast<vkb::Device &>(device),
-	                     reinterpret_cast<vkb::RenderTarget const &>(render_target),
-	                     reinterpret_cast<vkb::RenderPass const &>(render_pass))
-	{}
+        /**
+         * @brief facade class around vkb::Framebuffer, providing a vulkan.hpp-based interface
+         *
+         * See vkb::Framebuffer for documentation
+         */
+        class framebuffer : private vkb::Framebuffer
+        {
+        public:
+            framebuffer(vkb::core::device& device, const vkb::rendering::render_target& render_target, const vkb::core::render_pass& render_pass) :
+                vkb::Framebuffer(reinterpret_cast<vkb::Device&>(device),
+                                 reinterpret_cast<vkb::RenderTarget const&>(render_target),
+                                 reinterpret_cast<vkb::RenderPass const&>(render_pass))
+            {
+            }
 
-	const vk::Extent2D &get_extent() const
-	{
-		return reinterpret_cast<vk::Extent2D const &>(vkb::Framebuffer::get_extent());
-	}
+            const vk::Extent2D& extent() const
+            {
+                return reinterpret_cast<vk::Extent2D const&>(vkb::Framebuffer::get_extent());
+            }
 
-	vk::Framebuffer get_handle() const
-	{
-		return static_cast<vk::Framebuffer>(vkb::Framebuffer::get_handle());
-	}
-};
-}        // namespace core
-}        // namespace vkb
+            vk::Framebuffer handle() const
+            {
+                return static_cast<vk::Framebuffer>(vkb::Framebuffer::get_handle());
+            }
+        };
+    } // namespace core
+} // namespace vkb

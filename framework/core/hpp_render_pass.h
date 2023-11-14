@@ -22,60 +22,61 @@
 
 namespace vkb
 {
-namespace common
-{
-struct HPPLoadStoreInfo;
+    namespace common
+    {
+        struct HPPLoadStoreInfo;
+    }
 
-}
-namespace rendering
-{
-struct attachment;
-}
+    namespace rendering
+    {
+        struct attachment;
+    }
 
-namespace core
-{
-/**
- * @brief facade class around vkb::RenderPass, providing a vulkan.hpp-based interface
- *
- * See vkb::RenderPass for documentation
- */
+    namespace core
+    {
+        /**
+         * @brief facade class around vkb::RenderPass, providing a vulkan.hpp-based interface
+         *
+         * See vkb::RenderPass for documentation
+         */
 
-struct HPPSubpassInfo
-{
-	std::vector<uint32_t>   input_attachments;
-	std::vector<uint32_t>   output_attachments;
-	std::vector<uint32_t>   color_resolve_attachments;
-	bool                    disable_depth_stencil_attachment;
-	uint32_t                depth_stencil_resolve_attachment;
-	vk::ResolveModeFlagBits depth_stencil_resolve_mode;
-	std::string             debug_name;
-};
+        struct subpass_info
+        {
+            std::vector<uint32_t> input_attachments;
+            std::vector<uint32_t> output_attachments;
+            std::vector<uint32_t> color_resolve_attachments;
+            bool disable_depth_stencil_attachment;
+            uint32_t depth_stencil_resolve_attachment;
+            vk::ResolveModeFlagBits depth_stencil_resolve_mode;
+            std::string debug_name;
+        };
 
-class HPPRenderPass : private vkb::RenderPass
-{
-  public:
-	using vkb::RenderPass::get_color_output_count;
+        class render_pass : private vkb::RenderPass
+        {
+        public:
+            using vkb::RenderPass::get_color_output_count;
 
-  public:
-	HPPRenderPass(vkb::core::device                             &device,
-	              const std::vector<vkb::rendering::attachment> &attachments,
-	              const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
-	              const std::vector<vkb::core::HPPSubpassInfo>     &subpasses) :
-	    vkb::RenderPass(reinterpret_cast<vkb::Device &>(device),
-	                    reinterpret_cast<std::vector<vkb::Attachment> const &>(attachments),
-	                    reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store_infos),
-	                    reinterpret_cast<std::vector<vkb::SubpassInfo> const &>(subpasses))
-	{}
+        public:
+            render_pass(vkb::core::device& device,
+                        const std::vector<vkb::rendering::attachment>& attachments,
+                        const std::vector<vkb::common::HPPLoadStoreInfo>& load_store_infos,
+                        const std::vector<vkb::core::subpass_info>& subpasses) :
+                vkb::RenderPass(reinterpret_cast<vkb::Device&>(device),
+                                reinterpret_cast<std::vector<vkb::Attachment> const&>(attachments),
+                                reinterpret_cast<std::vector<vkb::LoadStoreInfo> const&>(load_store_infos),
+                                reinterpret_cast<std::vector<vkb::SubpassInfo> const&>(subpasses))
+            {
+            }
 
-	vk::RenderPass get_handle() const
-	{
-		return static_cast<vk::RenderPass>(vkb::RenderPass::get_handle());
-	}
+            vk::RenderPass get_handle() const
+            {
+                return static_cast<vk::RenderPass>(vkb::RenderPass::get_handle());
+            }
 
-	const vk::Extent2D get_render_area_granularity() const
-	{
-		return static_cast<vk::Extent2D>(vkb::RenderPass::get_render_area_granularity());
-	}
-};
-}        // namespace core
-}        // namespace vkb
+            const vk::Extent2D get_render_area_granularity() const
+            {
+                return static_cast<vk::Extent2D>(vkb::RenderPass::get_render_area_granularity());
+            }
+        };
+    } // namespace core
+} // namespace vkb

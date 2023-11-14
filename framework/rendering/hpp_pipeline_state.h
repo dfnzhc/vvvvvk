@@ -24,7 +24,7 @@ namespace vkb
 {
 namespace core
 {
-class HPPPipelineLayout;
+class pipeline_layout;
 }
 
 namespace rendering
@@ -124,14 +124,14 @@ class HPPPipelineState : private vkb::PipelineState
 		return reinterpret_cast<vkb::rendering::HPPColorBlendState const &>(vkb::PipelineState::get_color_blend_state());
 	}
 
-	const vkb::core::HPPPipelineLayout &get_pipeline_layout() const
+	const vkb::core::pipeline_layout &get_pipeline_layout() const
 	{
-		return reinterpret_cast<vkb::core::HPPPipelineLayout const &>(vkb::PipelineState::get_pipeline_layout());
+		return reinterpret_cast<vkb::core::pipeline_layout const &>(vkb::PipelineState::get_pipeline_layout());
 	}
 
-	const vkb::core::HPPRenderPass *get_render_pass() const
+	const vkb::core::render_pass *get_render_pass() const
 	{
-		return reinterpret_cast<vkb::core::HPPRenderPass const *>(vkb::PipelineState::get_render_pass());
+		return reinterpret_cast<vkb::core::render_pass const *>(vkb::PipelineState::get_render_pass());
 	}
 
 	const vkb::rendering::HPPSpecializationConstantState &get_specialization_constant_state() const
@@ -159,7 +159,7 @@ class HPPPipelineState : private vkb::PipelineState
 		vkb::PipelineState::set_multisample_state(reinterpret_cast<vkb::MultisampleState const &>(multisample_state));
 	}
 
-	void set_pipeline_layout(vkb::core::HPPPipelineLayout &pipeline_layout)
+	void set_pipeline_layout(vkb::core::pipeline_layout &pipeline_layout)
 	{
 		vkb::PipelineState::set_pipeline_layout(reinterpret_cast<vkb::PipelineLayout &>(pipeline_layout));
 	}
@@ -169,7 +169,7 @@ class HPPPipelineState : private vkb::PipelineState
 		vkb::PipelineState::set_rasterization_state(reinterpret_cast<vkb::RasterizationState const &>(rasterization_state));
 	}
 
-	void set_render_pass(const vkb::core::HPPRenderPass &render_pass)
+	void set_render_pass(const vkb::core::render_pass &render_pass)
 	{
 		vkb::PipelineState::set_render_pass(reinterpret_cast<vkb::RenderPass const &>(render_pass));
 	}

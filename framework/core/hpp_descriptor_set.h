@@ -23,47 +23,48 @@
 
 namespace vkb
 {
-namespace core
-{
-/**
- * @brief facade class around vkb::DescriptorSet, providing a vulkan.hpp-based interface
- *
- * See vkb::DescriptorSet for documentation
- */
-class HPPDescriptorSet : private vkb::DescriptorSet
-{
-  public:
-	HPPDescriptorSet(vkb::core::device                       &device,
-	                 const vkb::core::descriptor_set_layout    &descriptor_set_layout,
-	                 vkb::core::descriptor_pool               &descriptor_pool,
-	                 const BindingMap<vk::DescriptorBufferInfo> &buffer_infos = {},
-	                 const BindingMap<vk::DescriptorImageInfo>  &image_infos  = {}) :
-	    vkb::DescriptorSet(reinterpret_cast<vkb::Device &>(device),
-	                       reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout),
-	                       reinterpret_cast<vkb::DescriptorPool &>(descriptor_pool),
-	                       reinterpret_cast<BindingMap<VkDescriptorBufferInfo> const &>(buffer_infos),
-	                       reinterpret_cast<BindingMap<VkDescriptorImageInfo> const &>(image_infos))
-	{}
+    namespace core
+    {
+        /**
+         * @brief facade class around vkb::DescriptorSet, providing a vulkan.hpp-based interface
+         *
+         * See vkb::DescriptorSet for documentation
+         */
+        class descriptor_set : private vkb::DescriptorSet
+        {
+        public:
+            descriptor_set(vkb::core::device& device,
+                           const vkb::core::descriptor_set_layout& descriptor_set_layout,
+                           vkb::core::descriptor_pool& descriptor_pool,
+                           const BindingMap<vk::DescriptorBufferInfo>& buffer_infos = {},
+                           const BindingMap<vk::DescriptorImageInfo>& image_infos = {}) :
+                vkb::DescriptorSet(reinterpret_cast<vkb::Device&>(device),
+                                   reinterpret_cast<vkb::DescriptorSetLayout const&>(descriptor_set_layout),
+                                   reinterpret_cast<vkb::DescriptorPool&>(descriptor_pool),
+                                   reinterpret_cast<BindingMap<VkDescriptorBufferInfo> const&>(buffer_infos),
+                                   reinterpret_cast<BindingMap<VkDescriptorImageInfo> const&>(image_infos))
+            {
+            }
 
-	BindingMap<vk::DescriptorBufferInfo> &get_buffer_infos()
-	{
-		return reinterpret_cast<BindingMap<vk::DescriptorBufferInfo> &>(vkb::DescriptorSet::get_buffer_infos());
-	}
+            BindingMap<vk::DescriptorBufferInfo>& buffer_infos()
+            {
+                return reinterpret_cast<BindingMap<vk::DescriptorBufferInfo>&>(vkb::DescriptorSet::get_buffer_infos());
+            }
 
-	vk::DescriptorSet get_handle() const
-	{
-		return static_cast<vk::DescriptorSet>(vkb::DescriptorSet::get_handle());
-	}
+            vk::DescriptorSet handle() const
+            {
+                return static_cast<vk::DescriptorSet>(vkb::DescriptorSet::get_handle());
+            }
 
-	BindingMap<vk::DescriptorImageInfo> &get_image_infos()
-	{
-		return reinterpret_cast<BindingMap<vk::DescriptorImageInfo> &>(vkb::DescriptorSet::get_image_infos());
-	}
+            BindingMap<vk::DescriptorImageInfo>& image_infos()
+            {
+                return reinterpret_cast<BindingMap<vk::DescriptorImageInfo>&>(vkb::DescriptorSet::get_image_infos());
+            }
 
-	const vkb::core::descriptor_set_layout &get_layout() const
-	{
-		return reinterpret_cast<vkb::core::descriptor_set_layout const &>(vkb::DescriptorSet::get_layout());
-	}
-};
-}        // namespace core
-}        // namespace vkb
+            const vkb::core::descriptor_set_layout& layout() const
+            {
+                return reinterpret_cast<vkb::core::descriptor_set_layout const&>(vkb::DescriptorSet::get_layout());
+            }
+        };
+    } // namespace core
+} // namespace vkb

@@ -305,7 +305,7 @@ void HPPGui::prepare(vk::PipelineCache pipeline_cache, vk::RenderPass render_pas
 	                                                    &depth_stencil_state,
 	                                                    &color_blend_state,
 	                                                    &dynamic_state,
-	                                                    pipeline_layout->get_handle(),
+	                                                    pipeline_layout->handle(),
 	                                                    render_pass,
 	                                                    0,
 	                                                    nullptr,
@@ -606,12 +606,12 @@ void HPPGui::draw(vk::CommandBuffer command_buffer) const
 	}
 
 	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-	command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout->get_handle(), 0, descriptor_set, {});
+	command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout->handle(), 0, descriptor_set, {});
 
 	// Push constants
 	auto     &io             = ImGui::GetIO();
 	glm::mat4 push_transform = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, -1.0f, 0.0f)), glm::vec3(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f));
-	command_buffer.pushConstants<glm::mat4>(pipeline_layout->get_handle(), vk::ShaderStageFlagBits::eVertex, 0, push_transform);
+	command_buffer.pushConstants<glm::mat4>(pipeline_layout->handle(), vk::ShaderStageFlagBits::eVertex, 0, push_transform);
 
 	vk::DeviceSize offset = 0;
 	command_buffer.bindVertexBuffers(0, vertex_buffer->get_handle(), offset);
