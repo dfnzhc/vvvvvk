@@ -295,13 +295,13 @@ namespace vkb
         render_context->submit(command_buffer);
     }
 
-    void HPPVulkanSample::draw(vkb::core::HPPCommandBuffer& command_buffer, vkb::rendering::render_target const& render_target) const
+    void HPPVulkanSample::draw(vkb::core::command_buffer& command_buffer, vkb::rendering::render_target const& render_target) const
     {
         auto& views = render_target.views();
 
         {
             // Image 0 is the swapchain
-            vkb::common::HPPImageMemoryBarrier memory_barrier{};
+            vkb::common::image_memory_barrier memory_barrier{};
             memory_barrier.old_layout = vk::ImageLayout::eUndefined;
             memory_barrier.new_layout = vk::ImageLayout::eColorAttachmentOptimal;
             memory_barrier.src_access_mask = {};
@@ -319,7 +319,7 @@ namespace vkb
         }
 
         {
-            vkb::common::HPPImageMemoryBarrier memory_barrier{};
+            vkb::common::image_memory_barrier memory_barrier{};
             memory_barrier.old_layout = vk::ImageLayout::eUndefined;
             memory_barrier.new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
             memory_barrier.src_access_mask = {};
@@ -333,7 +333,7 @@ namespace vkb
         draw_renderpass(command_buffer, render_target);
 
         {
-            vkb::common::HPPImageMemoryBarrier memory_barrier{};
+            vkb::common::image_memory_barrier memory_barrier{};
             memory_barrier.old_layout = vk::ImageLayout::eColorAttachmentOptimal;
             memory_barrier.new_layout = vk::ImageLayout::ePresentSrcKHR;
             memory_barrier.src_access_mask = vk::AccessFlagBits::eColorAttachmentWrite;
@@ -344,7 +344,7 @@ namespace vkb
         }
     }
 
-    void HPPVulkanSample::draw_renderpass(vkb::core::HPPCommandBuffer& command_buffer, vkb::rendering::render_target const& render_target) const
+    void HPPVulkanSample::draw_renderpass(vkb::core::command_buffer& command_buffer, vkb::rendering::render_target const& render_target) const
     {
         set_viewport_and_scissor(command_buffer, render_target.extent());
 
@@ -358,7 +358,7 @@ namespace vkb
         command_buffer.get_handle().endRenderPass();
     }
 
-    void HPPVulkanSample::render(vkb::core::HPPCommandBuffer& command_buffer) const
+    void HPPVulkanSample::render(vkb::core::command_buffer& command_buffer) const
     {
         if (render_pipeline)
         {
@@ -466,10 +466,10 @@ namespace vkb
 
         get_debug_info().insert<field::Static, std::string>("driver_version", driver_version_str);
         get_debug_info().insert<field::Static, std::string>("resolution",
-                                                            to_string(static_cast<VkExtent2D const&>(render_context->get_swapchain().get_extent())));
+                                                            to_string(static_cast<VkExtent2D const&>(render_context->get_swapchain().extent())));
         get_debug_info().insert<field::Static, std::string>("surface_format",
-                                                            to_string(render_context->get_swapchain().get_format()) + " (" +
-                                                            to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().get_format())) +
+                                                            to_string(render_context->get_swapchain().format()) + " (" +
+                                                            to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().format())) +
                                                             "bpp)");
 
         if (scene != nullptr)
@@ -488,7 +488,7 @@ namespace vkb
         }
     }
 
-    void HPPVulkanSample::set_viewport_and_scissor(vkb::core::HPPCommandBuffer const& command_buffer, const vk::Extent2D& extent)
+    void HPPVulkanSample::set_viewport_and_scissor(vkb::core::command_buffer const& command_buffer, const vk::Extent2D& extent)
     {
         command_buffer.get_handle().setViewport(0, {{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f}});
         command_buffer.get_handle().setScissor(0, vk::Rect2D({}, extent));

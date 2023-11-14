@@ -311,7 +311,7 @@ class HPPGui
 	 * @brief Draws the HPPGui
 	 * @param command_buffer Command buffer to register draw-commands
 	 */
-	void draw(vkb::core::HPPCommandBuffer &command_buffer);
+	void draw(vkb::core::command_buffer &command_buffer);
 
 	/**
 	 * @brief Draws the HPPGui
@@ -380,7 +380,7 @@ class HPPGui
 	 * @brief Updates Vulkan buffers
 	 * @param frame Frame to render into
 	 */
-	void update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const;
+	void update_buffers(vkb::core::command_buffer &command_buffer) const;
 
   private:
 	/**
@@ -426,7 +426,7 @@ class HPPGui
 	std::vector<HPPFont>                     fonts;
 	std::unique_ptr<vkb::core::image>     font_image;
 	std::unique_ptr<vkb::core::image_view> font_image_view;
-	std::unique_ptr<vkb::core::HPPSampler>   sampler;
+	std::unique_ptr<vkb::core::sampler>   sampler;
 	vkb::core::pipeline_layout            *pipeline_layout = nullptr;
 	StatsView                                stats_view;
 	DebugView                                debug_view;

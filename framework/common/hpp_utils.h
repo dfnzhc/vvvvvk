@@ -26,16 +26,16 @@
  */
 namespace vkb
 {
-namespace common
-{
-inline sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, vk::Extent2D const &extent)
-{
-	return vkb::add_free_camera(scene, node_name, static_cast<VkExtent2D>(extent));
-}
+    namespace common
+    {
+        inline sg::Node& add_free_camera(sg::Scene& scene, const std::string& node_name, vk::Extent2D const& extent)
+        {
+            return vkb::add_free_camera(scene, node_name, static_cast<VkExtent2D>(extent));
+        }
 
-inline void screenshot(vkb::rendering::HPPRenderContext &render_context, const std::string &filename)
-{
-	vkb::screenshot(reinterpret_cast<vkb::RenderContext &>(render_context), filename);
-}
-}        // namespace common
-}        // namespace vkb
+        inline void screenshot(vkb::rendering::HPPRenderContext& render_context, const std::string& filename)
+        {
+            vkb::screenshot(reinterpret_cast<vkb::RenderContext&>(render_context), filename);
+        }
+    } // namespace common
+} // namespace vkb

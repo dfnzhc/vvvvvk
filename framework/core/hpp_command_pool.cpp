@@ -26,17 +26,17 @@ namespace vkb
                                        uint32_t queue_family_index,
                                        vkb::rendering::HPPRenderFrame* render_frame,
                                        size_t thread_index,
-                                       HPPCommandBuffer::ResetMode reset_mode) :
+                                       command_buffer::reset_mode reset_mode) :
             device_{d}, render_frame_{render_frame}, thread_index_{thread_index}, reset_mode_{reset_mode}
         {
             vk::CommandPoolCreateFlags flags;
             switch (reset_mode)
             {
-            case HPPCommandBuffer::ResetMode::ResetIndividually:
-            case HPPCommandBuffer::ResetMode::AlwaysAllocate:
+            case command_buffer::reset_mode::ResetIndividually:
+            case command_buffer::reset_mode::AlwaysAllocate:
                 flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
                 break;
-            case HPPCommandBuffer::ResetMode::ResetPool:
+            case command_buffer::reset_mode::ResetPool:
             default:
                 flags = vk::CommandPoolCreateFlagBits::eTransient;
                 break;
@@ -103,16 +103,16 @@ namespace vkb
         {
             switch (reset_mode_)
             {
-            case HPPCommandBuffer::ResetMode::ResetIndividually:
+            case command_buffer::reset_mode::ResetIndividually:
                 reset_command_buffers();
                 break;
 
-            case HPPCommandBuffer::ResetMode::ResetPool:
+            case command_buffer::reset_mode::ResetPool:
                 device_.get_handle().resetCommandPool(handle_);
                 reset_command_buffers();
                 break;
 
-            case HPPCommandBuffer::ResetMode::AlwaysAllocate:
+            case command_buffer::reset_mode::AlwaysAllocate:
                 primary_command_buffers_.clear();
                 active_primary_command_buffer_count_ = 0;
                 secondary_command_buffers_.clear();
@@ -124,7 +124,7 @@ namespace vkb
             }
         }
 
-        HPPCommandBuffer& command_pool::request_command_buffer(vk::CommandBufferLevel level)
+        command_buffer& command_pool::request_command_buffer(vk::CommandBufferLevel level)
         {
             if (level == vk::CommandBufferLevel::ePrimary)
             {
@@ -133,7 +133,7 @@ namespace vkb
                     return *primary_command_buffers_[active_primary_command_buffer_count_++];
                 }
 
-                primary_command_buffers_.emplace_back(std::make_unique<HPPCommandBuffer>(*this, level));
+                primary_command_buffers_.emplace_back(std::make_unique<command_buffer>(*this, level));
 
                 active_primary_command_buffer_count_++;
 
@@ -146,7 +146,7 @@ namespace vkb
                     return *secondary_command_buffers_[active_secondary_command_buffer_count_++];
                 }
 
-                secondary_command_buffers_.emplace_back(std::make_unique<HPPCommandBuffer>(*this, level));
+                secondary_command_buffers_.emplace_back(std::make_unique<command_buffer>(*this, level));
 
                 active_secondary_command_buffer_count_++;
 
@@ -154,7 +154,7 @@ namespace vkb
             }
         }
 
-        HPPCommandBuffer::ResetMode command_pool::get_reset_mode() const
+        command_buffer::reset_mode command_pool::get_reset_mode() const
         {
             return reset_mode_;
         }

@@ -74,7 +74,7 @@ namespace vkb
             return can_present_;
         }
 
-        void queue::submit(const HPPCommandBuffer& command_buffer, vk::Fence fence) const
+        void queue::submit(const command_buffer& command_buffer, vk::Fence fence) const
         {
             vk::CommandBuffer commandBuffer = command_buffer.get_handle();
             vk::SubmitInfo submit_info({}, {}, commandBuffer);

@@ -7,7 +7,7 @@ namespace vkb
 {
     namespace core
     {
-        class HPPCommandBuffer;
+        class command_buffer;
 
         class debug_utils
         {
@@ -86,7 +86,7 @@ namespace vkb
         {
         public:
             scoped_debug_label(const vkb::core::debug_utils& debug_utils, vk::CommandBuffer command_buffer, std::string const& name, glm::vec4 const color = {});
-            scoped_debug_label(const vkb::core::HPPCommandBuffer& command_buffer, std::string const& name, glm::vec4 const color = {});
+            scoped_debug_label(const vkb::core::command_buffer& command_buffer, std::string const& name, glm::vec4 const color = {});
 
             ~scoped_debug_label();
 

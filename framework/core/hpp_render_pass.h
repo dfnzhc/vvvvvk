@@ -24,7 +24,7 @@ namespace vkb
 {
     namespace common
     {
-        struct HPPLoadStoreInfo;
+        struct load_store_info;
     }
 
     namespace rendering
@@ -59,7 +59,7 @@ namespace vkb
         public:
             render_pass(vkb::core::device& device,
                         const std::vector<vkb::rendering::attachment>& attachments,
-                        const std::vector<vkb::common::HPPLoadStoreInfo>& load_store_infos,
+                        const std::vector<vkb::common::load_store_info>& load_store_infos,
                         const std::vector<vkb::core::subpass_info>& subpasses) :
                 vkb::RenderPass(reinterpret_cast<vkb::Device&>(device),
                                 reinterpret_cast<std::vector<vkb::Attachment> const&>(attachments),

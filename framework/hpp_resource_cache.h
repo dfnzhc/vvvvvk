@@ -86,7 +86,7 @@ namespace vkb
         vkb::core::graphics_pipeline& request_graphics_pipeline(vkb::rendering::HPPPipelineState& pipeline_state);
         vkb::core::pipeline_layout& request_pipeline_layout(const std::vector<vkb::core::shader_module*>& shader_modules);
         vkb::core::render_pass& request_render_pass(const std::vector<vkb::rendering::attachment>& attachments,
-                                                      const std::vector<vkb::common::HPPLoadStoreInfo>& load_store_infos,
+                                                      const std::vector<vkb::common::load_store_info>& load_store_infos,
                                                       const std::vector<vkb::core::subpass_info>& subpasses);
         vkb::core::shader_module& request_shader_module(
             vk::ShaderStageFlagBits stage, const vkb::core::shader_source& glsl_source, const vkb::core::shader_variant& shader_variant = {});

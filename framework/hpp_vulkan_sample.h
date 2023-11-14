@@ -142,20 +142,20 @@ class HPPVulkanSample : public vkb::Application
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	virtual void draw(vkb::core::HPPCommandBuffer &command_buffer, vkb::rendering::render_target const &render_target) const;
+	virtual void draw(vkb::core::command_buffer &command_buffer, vkb::rendering::render_target const &render_target) const;
 
 	/**
 	 * @brief Starts the render pass, executes the render pipeline, and then ends the render pass
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	virtual void draw_renderpass(vkb::core::HPPCommandBuffer &command_buffer, vkb::rendering::render_target const &render_target) const;
+	virtual void draw_renderpass(vkb::core::command_buffer &command_buffer, vkb::rendering::render_target const &render_target) const;
 
 	/**
 	 * @brief Triggers the render pipeline, it can be overridden by samples to specialize their rendering logic
 	 * @param command_buffer The command buffer to record the commands to
 	 */
-	virtual void render(vkb::core::HPPCommandBuffer &command_buffer) const;
+	virtual void render(vkb::core::command_buffer &command_buffer) const;
 
 	/**
 	 * @brief Get additional sample-specific instance layers.
@@ -232,7 +232,7 @@ class HPPVulkanSample : public vkb::Application
 	/**
 	 * @brief Set viewport and scissor state in command buffer for a given extent
 	 */
-	static void set_viewport_and_scissor(vkb::core::HPPCommandBuffer const &command_buffer, vk::Extent2D const &extent);
+	static void set_viewport_and_scissor(vkb::core::command_buffer const &command_buffer, vk::Extent2D const &extent);
 
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
 

@@ -21,23 +21,24 @@
 
 namespace vkb
 {
-namespace core
-{
-HPPSampler::HPPSampler(vkb::core::device &device, const vk::SamplerCreateInfo &info) :
-    vk_unit{device.get_handle().createSampler(info), &device}
-{}
+    namespace core
+    {
+        sampler::sampler(vkb::core::device& device, const vk::SamplerCreateInfo& info) :
+            vk_unit{device.get_handle().createSampler(info), &device}
+        {
+        }
 
-HPPSampler::HPPSampler(HPPSampler &&other) :
-    vk_unit(std::move(other))
-{}
+        sampler::sampler(sampler&& other) :
+            vk_unit(std::move(other))
+        {
+        }
 
-HPPSampler::~HPPSampler()
-{
-	if (get_handle())
-	{
-		get_device().get_handle().destroySampler(get_handle());
-	}
-}
-
-}        // namespace core
-}        // namespace vkb
+        sampler::~sampler()
+        {
+            if (get_handle())
+            {
+                get_device().get_handle().destroySampler(get_handle());
+            }
+        }
+    } // namespace core
+} // namespace vkb

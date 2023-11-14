@@ -426,7 +426,7 @@ namespace vkb
 
         void device::copy_buffer(vkb::core::HPPBuffer& src, vkb::core::HPPBuffer& dst, vk::Queue queue, vk::BufferCopy* copy_region) const
         {
-            assert(dst.get_size() <= src.get_size());
+            assert(dst.size() <= src.size());
             assert(src.get_handle());
 
             vk::CommandBuffer command_buffer = create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
@@ -438,7 +438,7 @@ namespace vkb
             }
             else
             {
-                buffer_copy.size = src.get_size();
+                buffer_copy.size = src.size();
             }
 
             command_buffer.copyBuffer(src.get_handle(), dst.get_handle(), buffer_copy);

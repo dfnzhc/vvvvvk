@@ -21,30 +21,23 @@
 
 namespace vkb
 {
-namespace core
-{
-/**
- * @brief Represents a Vulkan Sampler, using Vulkan-Hpp
- */
-class HPPSampler : public vkb::core::vk_unit<vk::Sampler>
-{
-  public:
-	/**
-	 * @brief Creates a Vulkan HPPSampler
-	 * @param device The device to use
-	 * @param info Creation details
-	 */
-	HPPSampler(vkb::core::device &device, const vk::SamplerCreateInfo &info);
+    namespace core
+    {
+        /**
+         * @brief Represents a Vulkan Sampler, using Vulkan-Hpp
+         */
+        class sampler : public vkb::core::vk_unit<vk::Sampler>
+        {
+        public:
+            sampler(vkb::core::device& device, const vk::SamplerCreateInfo& info);
 
-	HPPSampler(const HPPSampler &) = delete;
+            sampler(sampler&& sampler);
 
-	HPPSampler(HPPSampler &&sampler);
+            ~sampler();
 
-	~HPPSampler();
-
-	HPPSampler &operator=(const HPPSampler &) = delete;
-
-	HPPSampler &operator=(HPPSampler &&) = delete;
-};
-}        // namespace core
-}        // namespace vkb
+            sampler(const sampler&) = delete;
+            sampler& operator=(const sampler&) = delete;
+            sampler& operator=(sampler&&) = delete;
+        };
+    } // namespace core
+} // namespace vkb

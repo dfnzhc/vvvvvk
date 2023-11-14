@@ -39,104 +39,71 @@ namespace vkb
             vk::PresentModeKHR present_mode;
         };
 
-        class HPPSwapchain
+        class swapchain
         {
         public:
-            /**
-             * @brief Constructor to create a swapchain by changing the extent
-             *        only and preserving the configuration from the old swapchain.
-             */
-            HPPSwapchain(HPPSwapchain& old_swapchain, const vk::Extent2D& extent);
+            swapchain(swapchain& old_swapchain, const vk::Extent2D& extent);
+            swapchain(swapchain& old_swapchain, const uint32_t image_count);
+            swapchain(swapchain& old_swapchain, const std::set<vk::ImageUsageFlagBits>& image_usage_flags);
+            swapchain(swapchain& swapchain, const vk::Extent2D& extent, const vk::SurfaceTransformFlagBitsKHR transform);
 
-            /**
-             * @brief Constructor to create a swapchain by changing the image count
-             *        only and preserving the configuration from the old swapchain.
-             */
-            HPPSwapchain(HPPSwapchain& old_swapchain, const uint32_t image_count);
+            swapchain(device& device,
+                      vk::SurfaceKHR surface,
+                      const vk::PresentModeKHR present_mode,
+                      const std::vector<vk::PresentModeKHR>& present_mode_priority_list = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
+                      const std::vector<vk::SurfaceFormatKHR>& surface_format_priority_list = {
+                          {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+                          {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}
+                      },
+                      const vk::Extent2D& extent = {},
+                      const uint32_t image_count = 3,
+                      const vk::SurfaceTransformFlagBitsKHR transform = vk::SurfaceTransformFlagBitsKHR::eIdentity,
+                      const std::set<vk::ImageUsageFlagBits>& image_usage_flags = {vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eTransferSrc},
+                      vk::SwapchainKHR old_swapchain = nullptr);
 
-            /**
-             * @brief Constructor to create a swapchain by changing the image usage
-             * only and preserving the configuration from the old swapchain.
-             */
-            HPPSwapchain(HPPSwapchain& old_swapchain, const std::set<vk::ImageUsageFlagBits>& image_usage_flags);
 
-            /**
-             * @brief Constructor to create a swapchain by changing the extent
-             *        and transform only and preserving the configuration from the old swapchain.
-             */
-            HPPSwapchain(HPPSwapchain& swapchain, const vk::Extent2D& extent, const vk::SurfaceTransformFlagBitsKHR transform);
+            swapchain(swapchain&& other);
 
-            /**
-             * @brief Constructor to create a swapchain.
-             */
-            HPPSwapchain(device& device,
-                         vk::SurfaceKHR surface,
-                         const vk::PresentModeKHR present_mode,
-                         const std::vector<vk::PresentModeKHR>& present_mode_priority_list = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
-                         const std::vector<vk::SurfaceFormatKHR>& surface_format_priority_list = {
-                             {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-                             {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}
-                         },
-                         const vk::Extent2D& extent = {},
-                         const uint32_t image_count = 3,
-                         const vk::SurfaceTransformFlagBitsKHR transform = vk::SurfaceTransformFlagBitsKHR::eIdentity,
-                         const std::set<vk::ImageUsageFlagBits>& image_usage_flags = {vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eTransferSrc},
-                         vk::SwapchainKHR old_swapchain = nullptr);
+            ~swapchain();
 
-            HPPSwapchain(const HPPSwapchain&) = delete;
-
-            HPPSwapchain(HPPSwapchain&& other);
-
-            ~HPPSwapchain();
-
-            HPPSwapchain& operator=(const HPPSwapchain&) = delete;
-
-            HPPSwapchain& operator=(HPPSwapchain&&) = delete;
+            swapchain(const swapchain&) = delete;
+            swapchain& operator=(const swapchain&) = delete;
+            swapchain& operator=(swapchain&&) = delete;
 
             bool is_valid() const;
 
             device const& get_device() const;
-
-            vk::SwapchainKHR get_handle() const;
+            vk::SwapchainKHR handle() const;
+            vk::SurfaceKHR surface() const;
 
             std::pair<vk::Result, uint32_t> acquire_next_image(vk::Semaphore image_acquired_semaphore, vk::Fence fence = nullptr) const;
 
-            const vk::Extent2D& get_extent() const;
+            const vk::Extent2D& extent() const;
+            vk::Format format() const;
 
-            vk::Format get_format() const;
+            const std::vector<vk::Image>& images() const;
+            vk::SurfaceTransformFlagBitsKHR transform() const;
 
-            const std::vector<vk::Image>& get_images() const;
-
-            vk::SurfaceTransformFlagBitsKHR get_transform() const;
-
-            vk::SurfaceKHR get_surface() const;
-
-            vk::ImageUsageFlags get_usage() const;
-
-            vk::PresentModeKHR get_present_mode() const;
+            vk::ImageUsageFlags usage() const;
+            vk::PresentModeKHR present_mode() const;
 
         private:
             device& device_;
 
-            vk::SurfaceKHR surface;
+            vk::SurfaceKHR surface_;
+            vk::SwapchainKHR handle_;
 
-            vk::SwapchainKHR handle;
+            std::vector<vk::Image> images_;
 
-            std::vector<vk::Image> images;
+            std::vector<vk::SurfaceFormatKHR> surface_formats_;
+            std::vector<vk::PresentModeKHR> present_modes_;
 
-            std::vector<vk::SurfaceFormatKHR> surface_formats;
+            HPPSwapchainProperties properties_;
 
-            std::vector<vk::PresentModeKHR> present_modes;
+            std::vector<vk::PresentModeKHR> present_mode_priority_list_;
+            std::vector<vk::SurfaceFormatKHR> surface_format_priority_list_;
 
-            HPPSwapchainProperties properties;
-
-            // A list of present modes in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-            std::vector<vk::PresentModeKHR> present_mode_priority_list;
-
-            // A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-            std::vector<vk::SurfaceFormatKHR> surface_format_priority_list;
-
-            std::set<vk::ImageUsageFlagBits> image_usage_flags;
+            std::set<vk::ImageUsageFlagBits> image_usage_flags_;
         };
     } // namespace core
 } // namespace vkb

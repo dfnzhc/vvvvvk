@@ -24,7 +24,7 @@ namespace vkb
 {
     namespace common
     {
-        struct HPPLoadStoreInfo;
+        struct load_store_info;
     }
 
     namespace rendering
@@ -65,7 +65,7 @@ namespace vkb
         }
 
         size_t register_render_pass(const std::vector<vkb::rendering::attachment>& attachments,
-                                    const std::vector<vkb::common::HPPLoadStoreInfo>& load_store_infos,
+                                    const std::vector<vkb::common::load_store_info>& load_store_infos,
                                     const std::vector<vkb::core::subpass_info>& subpasses)
         {
             return vkb::ResourceRecord::register_render_pass(reinterpret_cast<std::vector<vkb::Attachment> const&>(attachments),

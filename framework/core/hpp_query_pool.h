@@ -21,20 +21,20 @@
 
 namespace vkb
 {
-namespace core
-{
-/**
- * @brief facade class around vkb::QueryPool, providing a vulkan.hpp-based interface
- *
- * See vkb::QueryPool for documentation
- */
-class HPPQueryPool : private vkb::QueryPool
-{
-  public:
-	vk::QueryPool get_handle() const
-	{
-		return static_cast<vk::QueryPool>(vkb::QueryPool::get_handle());
-	}
-};
-}        // namespace core
-}        // namespace vkb
+    namespace core
+    {
+        /**
+         * @brief facade class around vkb::QueryPool, providing a vulkan.hpp-based interface
+         *
+         * See vkb::QueryPool for documentation
+         */
+        class query_pool : private vkb::QueryPool
+        {
+        public:
+            vk::QueryPool handle() const
+            {
+                return static_cast<vk::QueryPool>(vkb::QueryPool::get_handle());
+            }
+        };
+    } // namespace core
+} // namespace vkb

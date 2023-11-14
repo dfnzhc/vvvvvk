@@ -45,12 +45,12 @@ class HPPStats : private vkb::Stats
 	    vkb::Stats(reinterpret_cast<vkb::RenderContext &>(render_context), buffer_size)
 	{}
 
-	void begin_sampling(vkb::core::HPPCommandBuffer &cb)
+	void begin_sampling(vkb::core::command_buffer &cb)
 	{
 		vkb::Stats::begin_sampling(reinterpret_cast<vkb::CommandBuffer &>(cb));
 	}
 
-	void end_sampling(vkb::core::HPPCommandBuffer &cb)
+	void end_sampling(vkb::core::command_buffer &cb)
 	{
 		vkb::Stats::end_sampling(reinterpret_cast<vkb::CommandBuffer &>(cb));
 	}

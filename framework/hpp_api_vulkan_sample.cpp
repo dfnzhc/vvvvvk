@@ -471,7 +471,7 @@ void HPPApiVulkanSample::submit_frame()
 	{
 		const auto &queue = get_device()->get_queue_by_present(0);
 
-		vk::SwapchainKHR swapchain = get_render_context().get_swapchain().get_handle();
+		vk::SwapchainKHR swapchain = get_render_context().get_swapchain().handle();
 
 		vk::PresentInfoKHR present_info({}, swapchain, current_buffer);
 		// Check if a wait semaphore has been specified to wait for before presenting the image
@@ -765,7 +765,7 @@ void HPPApiVulkanSample::create_swapchain_buffers()
 {
 	if (get_render_context().has_swapchain())
 	{
-		auto &images = get_render_context().get_swapchain().get_images();
+		auto &images = get_render_context().get_swapchain().images();
 
 		// Get the swap chain buffers containing the image and imageview
 		for (auto &swapchain_buffer : swapchain_buffers)
@@ -777,7 +777,7 @@ void HPPApiVulkanSample::create_swapchain_buffers()
 		for (auto &image : images)
 		{
 			swapchain_buffers.push_back(
-			    {image, vkb::common::create_image_view(get_device()->get_handle(), image, vk::ImageViewType::e2D, get_render_context().get_swapchain().get_format())});
+			    {image, vkb::common::create_image_view(get_device()->get_handle(), image, vk::ImageViewType::e2D, get_render_context().get_swapchain().format())});
 		}
 	}
 	else
@@ -805,7 +805,7 @@ void HPPApiVulkanSample::update_swapchain_image_usage_flags(std::set<vk::ImageUs
 void HPPApiVulkanSample::handle_surface_changes()
 {
 	vk::SurfaceCapabilitiesKHR surface_properties =
-	    get_device()->get_gpu().get_handle().getSurfaceCapabilitiesKHR(get_render_context().get_swapchain().get_surface());
+	    get_device()->get_gpu().get_handle().getSurfaceCapabilitiesKHR(get_render_context().get_swapchain().surface());
 
 	if (surface_properties.currentExtent != get_render_context().get_surface_extent())
 	{

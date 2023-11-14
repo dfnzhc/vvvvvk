@@ -155,7 +155,7 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 
 		{
 			// Prepare for transfer
-			vkb::common::HPPImageMemoryBarrier memory_barrier;
+			vkb::common::image_memory_barrier memory_barrier;
 			memory_barrier.old_layout      = vk::ImageLayout::eUndefined;
 			memory_barrier.new_layout      = vk::ImageLayout::eTransferDstOptimal;
 			memory_barrier.src_access_mask = {};
@@ -176,7 +176,7 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 
 		{
 			// Prepare for fragmen shader
-			vkb::common::HPPImageMemoryBarrier memory_barrier{};
+			vkb::common::image_memory_barrier memory_barrier{};
 			memory_barrier.old_layout      = vk::ImageLayout::eTransferDstOptimal;
 			memory_barrier.new_layout      = vk::ImageLayout::eShaderReadOnlyOptimal;
 			memory_barrier.src_access_mask = vk::AccessFlagBits::eTransferWrite;
@@ -220,7 +220,7 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 	sampler_info.addressModeW  = vk::SamplerAddressMode::eClampToEdge;
 	sampler_info.borderColor   = vk::BorderColor::eFloatOpaqueWhite;
 
-	sampler = std::make_unique<vkb::core::HPPSampler>(device, sampler_info);
+	sampler = std::make_unique<vkb::core::sampler>(device, sampler_info);
 	sampler->set_debug_name("GUI sampler");
 
 	if (explicit_update)
@@ -390,7 +390,7 @@ bool HPPGui::update_buffers()
 	return updated;
 }
 
-void HPPGui::update_buffers(vkb::core::HPPCommandBuffer &command_buffer) const
+void HPPGui::update_buffers(vkb::core::command_buffer &command_buffer) const
 {
 	ImDrawData                     *draw_data    = ImGui::GetDrawData();
 	vkb::rendering::HPPRenderFrame &render_frame = sample.get_render_context().get_active_frame();
@@ -436,7 +436,7 @@ void HPPGui::new_frame() const
 	ImGui::NewFrame();
 }
 
-void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
+void HPPGui::draw(vkb::core::command_buffer &command_buffer)
 {
 	if (!visible)
 	{
@@ -496,7 +496,7 @@ void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
 
 	if (sample.get_render_context().has_swapchain())
 	{
-		auto transform = sample.get_render_context().get_swapchain().get_transform();
+		auto transform = sample.get_render_context().get_swapchain().transform();
 
 		glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
 		if (transform & vk::SurfaceTransformFlagBitsKHR::eRotate90)
@@ -559,7 +559,7 @@ void HPPGui::draw(vkb::core::HPPCommandBuffer &command_buffer)
 			// Adjust for pre-rotation if necessary
 			if (sample.get_render_context().has_swapchain())
 			{
-				auto transform = sample.get_render_context().get_swapchain().get_transform();
+				auto transform = sample.get_render_context().get_swapchain().transform();
 				if (transform & vk::SurfaceTransformFlagBitsKHR::eRotate90)
 				{
 					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);

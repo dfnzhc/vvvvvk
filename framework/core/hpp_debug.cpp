@@ -98,7 +98,7 @@ namespace vkb
             }
         }
 
-        scoped_debug_label::scoped_debug_label(const vkb::core::HPPCommandBuffer& command_buffer, std::string const& name, glm::vec4 const color) :
+        scoped_debug_label::scoped_debug_label(const vkb::core::command_buffer& command_buffer, std::string const& name, glm::vec4 const color) :
             scoped_debug_label{command_buffer.get_device().get_debug_utils(), command_buffer.get_handle(), name, color}
         {
         }

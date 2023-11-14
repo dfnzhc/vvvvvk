@@ -40,11 +40,11 @@ HPPRenderContext::HPPRenderContext(vkb::core::device                    &device,
 		if (surface_properties.currentExtent.width == 0xFFFFFFFF)
 		{
 			swapchain =
-			    std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, surface_extent);
+			    std::make_unique<vkb::core::swapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, surface_extent);
 		}
 		else
 		{
-			swapchain = std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list);
+			swapchain = std::make_unique<vkb::core::swapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list);
 		}
 	}
 }
@@ -55,13 +55,13 @@ void HPPRenderContext::prepare(size_t thread_count, vkb::rendering::render_targe
 
 	if (swapchain)
 	{
-		surface_extent = swapchain->get_extent();
+		surface_extent = swapchain->extent();
 
 		vk::Extent3D extent{surface_extent.width, surface_extent.height, 1};
 
-		for (auto &image_handle : swapchain->get_images())
+		for (auto &image_handle : swapchain->images())
 		{
-			auto swapchain_image = core::image{device, image_handle, extent, swapchain->get_format(), swapchain->get_usage()};
+			auto swapchain_image = core::image{device, image_handle, extent, swapchain->format(), swapchain->usage()};
 			auto render_target   = create_render_target_func(std::move(swapchain_image));
 			frames.emplace_back(std::make_unique<vkb::rendering::HPPRenderFrame>(device, std::move(render_target), thread_count));
 		}
@@ -88,7 +88,7 @@ void HPPRenderContext::prepare(size_t thread_count, vkb::rendering::render_targe
 
 vk::Format HPPRenderContext::get_format() const
 {
-	return swapchain ? swapchain->get_format() : DEFAULT_VK_FORMAT;
+	return swapchain ? swapchain->format() : DEFAULT_VK_FORMAT;
 }
 
 void HPPRenderContext::update_swapchain(const vk::Extent2D &extent)
@@ -101,7 +101,7 @@ void HPPRenderContext::update_swapchain(const vk::Extent2D &extent)
 
 	device.get_resource_cache().clear_framebuffers();
 
-	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, extent);
+	swapchain = std::make_unique<vkb::core::swapchain>(*swapchain, extent);
 
 	recreate();
 }
@@ -118,7 +118,7 @@ void HPPRenderContext::update_swapchain(const uint32_t image_count)
 
 	device.get_handle().waitIdle();
 
-	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_count);
+	swapchain = std::make_unique<vkb::core::swapchain>(*swapchain, image_count);
 
 	recreate();
 }
@@ -133,7 +133,7 @@ void HPPRenderContext::update_swapchain(const std::set<vk::ImageUsageFlagBits> &
 
 	device.get_resource_cache().clear_framebuffers();
 
-	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, image_usage_flags);
+	swapchain = std::make_unique<vkb::core::swapchain>(*swapchain, image_usage_flags);
 
 	recreate();
 }
@@ -156,7 +156,7 @@ void HPPRenderContext::update_swapchain(const vk::Extent2D &extent, const vk::Su
 		std::swap(width, height);
 	}
 
-	swapchain = std::make_unique<vkb::core::HPPSwapchain>(*swapchain, vk::Extent2D{width, height}, transform);
+	swapchain = std::make_unique<vkb::core::swapchain>(*swapchain, vk::Extent2D{width, height}, transform);
 
 	// Save the preTransform attribute for future rotations
 	pre_transform = transform;
@@ -168,14 +168,14 @@ void HPPRenderContext::recreate()
 {
 	LOGI("Recreated swapchain");
 
-	vk::Extent2D swapchain_extent = swapchain->get_extent();
+	vk::Extent2D swapchain_extent = swapchain->extent();
 	vk::Extent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
 
 	auto frame_it = frames.begin();
 
-	for (auto &image_handle : swapchain->get_images())
+	for (auto &image_handle : swapchain->images())
 	{
-		vkb::core::image swapchain_image{device, image_handle, extent, swapchain->get_format(), swapchain->get_usage()};
+		vkb::core::image swapchain_image{device, image_handle, extent, swapchain->format(), swapchain->usage()};
 
 		auto render_target = create_render_target_func(std::move(swapchain_image));
 
@@ -203,7 +203,7 @@ bool HPPRenderContext::handle_surface_changes(bool force_update)
 		return false;
 	}
 
-	vk::SurfaceCapabilitiesKHR surface_properties = device.get_gpu().get_handle().getSurfaceCapabilitiesKHR(swapchain->get_surface());
+	vk::SurfaceCapabilitiesKHR surface_properties = device.get_gpu().get_handle().getSurfaceCapabilitiesKHR(swapchain->surface());
 
 	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
 	{
@@ -230,7 +230,7 @@ bool HPPRenderContext::handle_surface_changes(bool force_update)
 	return false;
 }
 
-vkb::core::HPPCommandBuffer &HPPRenderContext::begin(vkb::core::HPPCommandBuffer::ResetMode reset_mode)
+vkb::core::command_buffer &HPPRenderContext::begin(vkb::core::command_buffer::reset_mode reset_mode)
 {
 	assert(prepared && "HPPRenderContext not prepared for rendering, call prepare()");
 
@@ -248,12 +248,12 @@ vkb::core::HPPCommandBuffer &HPPRenderContext::begin(vkb::core::HPPCommandBuffer
 	return get_active_frame().request_command_buffer(queue, reset_mode);
 }
 
-void HPPRenderContext::submit(vkb::core::HPPCommandBuffer &command_buffer)
+void HPPRenderContext::submit(vkb::core::command_buffer &command_buffer)
 {
 	submit({&command_buffer});
 }
 
-void HPPRenderContext::submit(const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers)
+void HPPRenderContext::submit(const std::vector<vkb::core::command_buffer *> &command_buffers)
 {
 	assert(frame_active && "HPPRenderContext is inactive, cannot submit command buffer. Please call begin()");
 
@@ -325,12 +325,12 @@ void HPPRenderContext::begin_frame()
 }
 
 vk::Semaphore HPPRenderContext::submit(const vkb::core::queue                        &queue,
-                                       const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers,
+                                       const std::vector<vkb::core::command_buffer *> &command_buffers,
                                        vk::Semaphore                                     wait_semaphore,
                                        vk::PipelineStageFlags                            wait_pipeline_stage)
 {
 	std::vector<vk::CommandBuffer> cmd_buf_handles(command_buffers.size(), nullptr);
-	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const vkb::core::HPPCommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
+	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const vkb::core::command_buffer *cmd_buf) { return cmd_buf->get_handle(); });
 
 	vkb::rendering::HPPRenderFrame &frame = get_active_frame();
 
@@ -350,10 +350,10 @@ vk::Semaphore HPPRenderContext::submit(const vkb::core::queue                   
 	return signal_semaphore;
 }
 
-void HPPRenderContext::submit(const vkb::core::queue &queue, const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers)
+void HPPRenderContext::submit(const vkb::core::queue &queue, const std::vector<vkb::core::command_buffer *> &command_buffers)
 {
 	std::vector<vk::CommandBuffer> cmd_buf_handles(command_buffers.size(), nullptr);
-	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const vkb::core::HPPCommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
+	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const vkb::core::command_buffer *cmd_buf) { return cmd_buf->get_handle(); });
 
 	vkb::rendering::HPPRenderFrame &frame = get_active_frame();
 
@@ -375,7 +375,7 @@ void HPPRenderContext::end_frame(vk::Semaphore semaphore)
 
 	if (swapchain)
 	{
-		vk::SwapchainKHR   vk_swapchain = swapchain->get_handle();
+		vk::SwapchainKHR   vk_swapchain = swapchain->handle();
 		vk::PresentInfoKHR present_info(semaphore, vk_swapchain, active_frame_index);
 
 		vk::DisplayPresentInfoKHR disp_present_info;
@@ -460,14 +460,14 @@ void HPPRenderContext::recreate_swapchain()
 	device.get_handle().waitIdle();
 	device.get_resource_cache().clear_framebuffers();
 
-	vk::Extent2D swapchain_extent = swapchain->get_extent();
+	vk::Extent2D swapchain_extent = swapchain->extent();
 	vk::Extent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
 
 	auto frame_it = frames.begin();
 
-	for (auto &image_handle : swapchain->get_images())
+	for (auto &image_handle : swapchain->images())
 	{
-		vkb::core::image swapchain_image{device, image_handle, extent, swapchain->get_format(), swapchain->get_usage()};
+		vkb::core::image swapchain_image{device, image_handle, extent, swapchain->format(), swapchain->usage()};
 		auto                render_target = create_render_target_func(std::move(swapchain_image));
 		(*frame_it)->update_render_target(std::move(render_target));
 
@@ -480,7 +480,7 @@ bool HPPRenderContext::has_swapchain()
 	return swapchain != nullptr;
 }
 
-vkb::core::HPPSwapchain const &HPPRenderContext::get_swapchain() const
+vkb::core::swapchain const &HPPRenderContext::get_swapchain() const
 {
 	assert(swapchain && "Swapchain is not valid");
 	return *swapchain;

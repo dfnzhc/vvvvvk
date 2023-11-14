@@ -38,7 +38,7 @@ namespace vkb
                          uint32_t queue_family_index,
                          vkb::rendering::HPPRenderFrame* render_frame = nullptr,
                          size_t thread_index = 0,
-                         HPPCommandBuffer::ResetMode reset_mode = HPPCommandBuffer::ResetMode::ResetPool);
+                         command_buffer::reset_mode reset_mode = command_buffer::reset_mode::ResetPool);
             command_pool(const command_pool&) = delete;
             command_pool(command_pool&& other);
             ~command_pool();
@@ -50,9 +50,9 @@ namespace vkb
             vk::CommandPool get_handle() const;
             uint32_t get_queue_family_index() const;
             vkb::rendering::HPPRenderFrame* get_render_frame();
-            HPPCommandBuffer::ResetMode get_reset_mode() const;
+            command_buffer::reset_mode get_reset_mode() const;
             size_t get_thread_index() const;
-            HPPCommandBuffer& request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
+            command_buffer& request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
             void reset_pool();
 
         private:
@@ -64,11 +64,11 @@ namespace vkb
             vkb::rendering::HPPRenderFrame* render_frame_ = nullptr;
             size_t thread_index_ = 0;
             uint32_t queue_family_index_ = 0;
-            std::vector<std::unique_ptr<HPPCommandBuffer>> primary_command_buffers_;
+            std::vector<std::unique_ptr<command_buffer>> primary_command_buffers_;
             uint32_t active_primary_command_buffer_count_ = 0;
-            std::vector<std::unique_ptr<HPPCommandBuffer>> secondary_command_buffers_;
+            std::vector<std::unique_ptr<command_buffer>> secondary_command_buffers_;
             uint32_t active_secondary_command_buffer_count_ = 0;
-            HPPCommandBuffer::ResetMode reset_mode_ = HPPCommandBuffer::ResetMode::ResetPool;
+            command_buffer::reset_mode reset_mode_ = command_buffer::reset_mode::ResetPool;
         };
     } // namespace core
 } // namespace vkb

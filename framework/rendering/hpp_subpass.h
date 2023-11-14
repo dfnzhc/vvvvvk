@@ -22,45 +22,44 @@
 
 namespace vkb
 {
-namespace rendering
-{
-struct alignas(16) HPPLight
-{
-	glm::vec4 position;         // position.w represents type of light
-	glm::vec4 color;            // color.w represents light intensity
-	glm::vec4 direction;        // direction.w represents range
-	glm::vec2 info;             // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
-};
+    namespace rendering
+    {
+        struct alignas(16) light
+        {
+            glm::vec4 position; // position.w represents type of light
+            glm::vec4 color; // color.w represents light intensity
+            glm::vec4 direction; // direction.w represents range
+            glm::vec2 info; // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
+        };
 
-struct HPPLightingState
-{
-	std::vector<HPPLight>    directional_lights;
-	std::vector<HPPLight>    point_lights;
-	std::vector<HPPLight>    spot_lights;
-	vkb::HPPBufferAllocation light_buffer;
-};
+        struct lighting_state
+        {
+            std::vector<light> directional_lights;
+            std::vector<light> point_lights;
+            std::vector<light> spot_lights;
+            vkb::HPPBufferAllocation light_buffer;
+        };
 
-/**
- * @brief facade class around vkb::Subpass, providing a vulkan.hpp-based interface
- *
- * See vkb::Subpass for documentation
- */
-class HPPSubpass : private vkb::Subpass
-{
-  public:
-	using vkb::Subpass::get_color_resolve_attachments;
-	using vkb::Subpass::get_debug_name;
-	using vkb::Subpass::get_depth_stencil_resolve_attachment;
-	using vkb::Subpass::get_disable_depth_stencil_attachment;
-	using vkb::Subpass::get_input_attachments;
-	using vkb::Subpass::get_output_attachments;
+        /**
+         * @brief facade class around vkb::Subpass, providing a vulkan.hpp-based interface
+         *
+         * See vkb::Subpass for documentation
+         */
+        class subpass : private vkb::Subpass
+        {
+        public:
+            using vkb::Subpass::get_color_resolve_attachments;
+            using vkb::Subpass::get_debug_name;
+            using vkb::Subpass::get_depth_stencil_resolve_attachment;
+            using vkb::Subpass::get_disable_depth_stencil_attachment;
+            using vkb::Subpass::get_input_attachments;
+            using vkb::Subpass::get_output_attachments;
 
-  public:
-	const vk::ResolveModeFlagBits get_depth_stencil_resolve_mode() const
-	{
-		return static_cast<vk::ResolveModeFlagBits>(vkb::Subpass::get_depth_stencil_resolve_mode());
-	}
-};
-
-}        // namespace rendering
-}        // namespace vkb
+        public:
+            const vk::ResolveModeFlagBits depth_stencil_resolve_mode() const
+            {
+                return static_cast<vk::ResolveModeFlagBits>(vkb::Subpass::get_depth_stencil_resolve_mode());
+            }
+        };
+    } // namespace rendering
+} // namespace vkb

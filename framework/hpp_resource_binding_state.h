@@ -36,7 +36,7 @@ struct HPPResourceInfo
 	vk::DeviceSize                 offset     = 0;
 	vk::DeviceSize                 range      = 0;
 	const vkb::core::image_view *image_view = nullptr;
-	const vkb::core::HPPSampler   *sampler    = nullptr;
+	const vkb::core::sampler   *sampler    = nullptr;
 };
 
 class HPPResourceSet : private vkb::ResourceSet
@@ -69,7 +69,7 @@ class HPPResourceBindingState : private vkb::ResourceBindingState
 		                                       array_element);
 	}
 
-	void bind_image(const vkb::core::image_view &image_view, const vkb::core::HPPSampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
+	void bind_image(const vkb::core::image_view &image_view, const vkb::core::sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 	{
 		vkb::ResourceBindingState::bind_image(
 		    reinterpret_cast<vkb::core::ImageView const &>(image_view), reinterpret_cast<vkb::core::Sampler const &>(sampler), set, binding, array_element);

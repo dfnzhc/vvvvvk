@@ -23,7 +23,7 @@ namespace vkb
 {
     namespace core
     {
-        class HPPCommandBuffer;
+        class command_buffer;
         class device;
 
         class queue
@@ -46,7 +46,7 @@ namespace vkb
             const vk::QueueFamilyProperties& get_properties() const;
             vk::Bool32 support_present() const;
 
-            void submit(const HPPCommandBuffer& command_buffer, vk::Fence fence) const;
+            void submit(const command_buffer& command_buffer, vk::Fence fence) const;
             vk::Result present(const vk::PresentInfoKHR& present_infos) const;
 
         private:

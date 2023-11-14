@@ -59,12 +59,12 @@ class HPPRenderFrame : private vkb::RenderFrame
 		vkb::RenderFrame::release_owned_semaphore(static_cast<VkSemaphore>(semaphore));
 	}
 
-	vkb::core::HPPCommandBuffer &request_command_buffer(const vkb::core::queue             &queue,
-	                                                    vkb::core::HPPCommandBuffer::ResetMode reset_mode   = vkb::core::HPPCommandBuffer::ResetMode::ResetPool,
+	vkb::core::command_buffer &request_command_buffer(const vkb::core::queue             &queue,
+	                                                    vkb::core::command_buffer::reset_mode reset_mode   = vkb::core::command_buffer::reset_mode::ResetPool,
 	                                                    vk::CommandBufferLevel                 level        = vk::CommandBufferLevel::ePrimary,
 	                                                    size_t                                 thread_index = 0)
 	{
-		return reinterpret_cast<vkb::core::HPPCommandBuffer &>(
+		return reinterpret_cast<vkb::core::command_buffer &>(
 		    vkb::RenderFrame::request_command_buffer(reinterpret_cast<vkb::Queue const &>(queue),
 		                                             static_cast<vkb::CommandBuffer::ResetMode>(reset_mode),
 		                                             static_cast<VkCommandBufferLevel>(level),

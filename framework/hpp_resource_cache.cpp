@@ -107,7 +107,7 @@ namespace vkb
     }
 
     vkb::core::render_pass& resource_cache::request_render_pass(const std::vector<vkb::rendering::attachment>& attachments,
-                                                                  const std::vector<vkb::common::HPPLoadStoreInfo>& load_store_infos,
+                                                                  const std::vector<vkb::common::load_store_info>& load_store_infos,
                                                                   const std::vector<vkb::core::subpass_info>& subpasses)
     {
         return request_resource(device_, recorder_, render_pass_mutex_, state_.render_passes, attachments, load_store_infos, subpasses);

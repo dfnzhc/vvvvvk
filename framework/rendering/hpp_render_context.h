@@ -117,19 +117,19 @@ class HPPRenderContext
 	 * @returns A valid command buffer to record commands to be submitted
 	 * Also ensures that there is an active frame if there is no existing active frame already
 	 */
-	vkb::core::HPPCommandBuffer &begin(vkb::core::HPPCommandBuffer::ResetMode reset_mode = vkb::core::HPPCommandBuffer::ResetMode::ResetPool);
+	vkb::core::command_buffer &begin(vkb::core::command_buffer::reset_mode reset_mode = vkb::core::command_buffer::reset_mode::ResetPool);
 
 	/**
 	 * @brief Submits the command buffer to the right queue
 	 * @param command_buffer A command buffer containing recorded commands
 	 */
-	void submit(vkb::core::HPPCommandBuffer &command_buffer);
+	void submit(vkb::core::command_buffer &command_buffer);
 
 	/**
 	 * @brief Submits multiple command buffers to the right queue
 	 * @param command_buffers Command buffers containing recorded commands
 	 */
-	void submit(const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers);
+	void submit(const std::vector<vkb::core::command_buffer *> &command_buffers);
 
 	/**
 	 * @brief begin_frame
@@ -137,14 +137,14 @@ class HPPRenderContext
 	void begin_frame();
 
 	vk::Semaphore submit(const vkb::core::queue                        &queue,
-	                     const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers,
+	                     const std::vector<vkb::core::command_buffer *> &command_buffers,
 	                     vk::Semaphore                                     wait_semaphore,
 	                     vk::PipelineStageFlags                            wait_pipeline_stage);
 
 	/**
 	 * @brief Submits a command buffer related to a frame to a queue
 	 */
-	void submit(const vkb::core::queue &queue, const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers);
+	void submit(const vkb::core::queue &queue, const std::vector<vkb::core::command_buffer *> &command_buffers);
 
 	/**
 	 * @brief Waits a frame to finish its rendering
@@ -185,7 +185,7 @@ class HPPRenderContext
 	 */
 	vk::Format get_format() const;
 
-	vkb::core::HPPSwapchain const &get_swapchain() const;
+	vkb::core::swapchain const &get_swapchain() const;
 
 	vk::Extent2D const &get_surface_extent() const;
 
@@ -215,7 +215,7 @@ class HPPRenderContext
 	/// If swapchain exists, then this will be a present supported queue, else a graphics queue
 	const vkb::core::queue &queue;
 
-	std::unique_ptr<vkb::core::HPPSwapchain> swapchain;
+	std::unique_ptr<vkb::core::swapchain> swapchain;
 
 	vkb::core::HPPSwapchainProperties swapchain_properties;
 
