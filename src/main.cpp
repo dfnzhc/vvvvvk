@@ -150,10 +150,12 @@ private:
     std::unique_ptr<vk_instance> instance;
     VkSurfaceKHR                 surface;
 
-    vk::PhysicalDevice physicalDevice;
+    std::unique_ptr<vk_physical_device> physicalDevice;
+//    vk::PhysicalDevice physicalDevice;
 //    vk_physical_device& physicalDevice;
 //    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkDevice           device;
+
+    VkDevice                            device;
 
     VkQueue graphicsQueue;
     VkQueue presentQueue;
@@ -397,7 +399,8 @@ private:
 
     void pickPhysicalDevice()
     {
-        physicalDevice = instance->get_suitable_gpu(surface).handle();
+        physicalDevice = std::make_unique<vk_physical_device>(*instance);
+//        physicalDevice = instance->get_suitable_gpu(surface).handle();
 //        physicalDevice = instance->get_suitable_gpu(surface);
 //
 //        if (physicalDevice == VK_NULL_HANDLE) {
@@ -437,9 +440,7 @@ private:
         createInfo.enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-        auto& physicalDevice = instance->get_suitable_gpu(surface);
-
-        if (vkCreateDevice(physicalDevice.handle(), &createInfo, nullptr, &device) != VK_SUCCESS) {
+        if (vkCreateDevice(physicalDevice->handle(), &createInfo, nullptr, &device) != VK_SUCCESS) {
             throw std::runtime_error("failed to create logical device!");
         }
 
@@ -778,7 +779,7 @@ private:
     {
         for (VkFormat format: candidates) {
             VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+            vkGetPhysicalDeviceFormatProperties(physicalDevice->handle(), format, &props);
 
             if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
                 return format;
@@ -850,7 +851,7 @@ private:
     void createTextureSampler()
     {
         VkPhysicalDeviceProperties properties{};
-        vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+        vkGetPhysicalDeviceProperties(physicalDevice->handle(), &properties);
 
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1252,7 +1253,7 @@ private:
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
     {
         VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+        vkGetPhysicalDeviceMemoryProperties(physicalDevice->handle(), &memProperties);
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
             if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
@@ -1505,23 +1506,24 @@ private:
     SwapChainSupportDetails querySwapChainSupport()
     {
         SwapChainSupportDetails details;
-
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &details.capabilities);
+        
+        const auto pd = physicalDevice->handle();
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pd, surface, &details.capabilities);
 
         uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(pd, surface, &formatCount, nullptr);
 
         if (formatCount != 0) {
             details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, details.formats.data());
+            vkGetPhysicalDeviceSurfaceFormatsKHR(pd, surface, &formatCount, details.formats.data());
         }
 
         uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(pd, surface, &presentModeCount, nullptr);
 
         if (presentModeCount != 0) {
             details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount,
+            vkGetPhysicalDeviceSurfacePresentModesKHR(pd, surface, &presentModeCount,
                                                       details.presentModes.data());
         }
 
@@ -1566,11 +1568,11 @@ private:
     QueueFamilyIndices findQueueFamilies()
     {
         QueueFamilyIndices indices;
-        uint32_t queueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+        uint32_t           queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice->handle(), &queueFamilyCount, nullptr);
 
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice->handle(), &queueFamilyCount, queueFamilies.data());
 
         int i = 0;
         for (const auto& queueFamily: queueFamilies) {
@@ -1579,7 +1581,7 @@ private:
             }
 
             VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice->handle(), i, surface, &presentSupport);
 
             if (presentSupport) {
                 indices.presentFamily = i;

@@ -6,46 +6,105 @@
  */
 
 #include "PhysicalDevice.hpp"
+#include "Deivce.hpp"
 
-vk_physical_device::vk_physical_device(vk_instance& instance, vk::PhysicalDevice physical_device) :
-    instance_{instance},
-    handle_{physical_device}
+namespace {
+
+uint32_t ScorePhysicalDevice(const vk::PhysicalDevice& device)
 {
-    features_          = physical_device.getFeatures();
-    properties_        = physical_device.getProperties();
-    memory_properties_ = physical_device.getMemoryProperties();
+    uint32_t score = 0;
+    const auto& extensionProperties = device.enumerateDeviceExtensionProperties();
+
+    // 查看逻辑设备请求的扩展是否支持
+    for (const char* currentExtension: vk_device::extensions) {
+        bool extensionFound = false;
+
+        for (const auto& extension: extensionProperties) {
+            if (std::strcmp(currentExtension, extension.extensionName) == 0) {
+                extensionFound = true;
+                break;
+            }
+        }
+
+        if (!extensionFound)
+            return 0;
+    }
+
+    // Obtain the device features and properties of the current device being rateds.
+    // 根据设备的功能和特性进行打分
+    const auto properties = device.getProperties();
+    const auto features   = device.getFeatures();
+
+    if (properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+        score += 1000;
+
+    score += properties.limits.maxImageDimension2D;
+
+    return score;
+}
+
+vk::PhysicalDevice ChoosePhysicalDevice(const std::vector<vk::PhysicalDevice>& devices)
+{
+    std::multimap<uint32_t, VkPhysicalDevice> rankedDevices;
+
+    auto where = rankedDevices.end();
+    for (const auto& device: devices)
+        where = rankedDevices.insert(where, {ScorePhysicalDevice(device), device});
+
+    if (rankedDevices.rbegin()->first > 0)
+        return rankedDevices.rbegin()->second;
+
+    return VK_NULL_HANDLE;
+}
+
+const std::vector<vk::SampleCountFlagBits> STAGE_FLAG_BITS = {
+    vk::SampleCountFlagBits::e64, vk::SampleCountFlagBits::e32,
+    vk::SampleCountFlagBits::e16, vk::SampleCountFlagBits::e8,
+    vk::SampleCountFlagBits::e4, vk::SampleCountFlagBits::e1
+};
+
+vk::SampleCountFlagBits GetMaxUsableSampleCount(vk::PhysicalDevice physicalDevice)
+{
+    const auto& props = physicalDevice.getProperties();
+
+    auto counts = std::min(props.limits.framebufferColorSampleCounts,
+                           props.limits.framebufferDepthSampleCounts);
+
+    for (const auto& sampleFlag: STAGE_FLAG_BITS) {
+        if (counts & sampleFlag)
+            return sampleFlag;
+    }
+
+    return vk::SampleCountFlagBits::e1;
+}
+
+} // namespace 
+
+vk_physical_device::vk_physical_device(const vk_instance& instance) :
+    instance_{instance}
+{
+    const auto& physical_devices = instance.handle().enumeratePhysicalDevices();
+    if (physical_devices.empty()) {
+        throw std::runtime_error("没有找到支持 Vulkan 的物理设备");
+    }
+
+    handle_ = ChoosePhysicalDevice(physical_devices);
+    if (!handle_) {
+        throw std::runtime_error("没有找到合适的物理设备");
+    }
+
+    features_          = handle_.getFeatures();
+    properties_        = handle_.getProperties();
+    memory_properties_ = handle_.getMemoryProperties();
 
     LOGI("Found GPU: {}", properties_.deviceName.data());
+    queue_family_properties_ = handle_.getQueueFamilyProperties();
 
-    queue_family_properties_ = physical_device.getQueueFamilyProperties();
+    msaaSamples_ = GetMaxUsableSampleCount(handle_);
 }
 
-void* vk_physical_device::extension_feature_chain() const
-{
-    return last_requested_extension_feature_;
-}
-
-const vk::PhysicalDeviceFeatures& vk_physical_device::features() const
-{
-    return features_;
-}
-
-vk::PhysicalDevice vk_physical_device::handle() const
-{
-    return handle_;
-}
-
-vk_instance& vk_physical_device::instance() const
-{
-    return instance_;
-}
-
-const vk::PhysicalDeviceMemoryProperties& vk_physical_device::memory_properties() const
-{
-    return memory_properties_;
-}
-
-uint32_t vk_physical_device::memory_type(uint32_t bits, vk::MemoryPropertyFlags properties,
+uint32_t vk_physical_device::memory_type(uint32_t bits,
+                                         vk::MemoryPropertyFlags properties,
                                          vk::Bool32* memory_type_found) const
 {
     for (uint32_t i = 0; i < memory_properties_.memoryTypeCount; i++) {
@@ -64,26 +123,7 @@ uint32_t vk_physical_device::memory_type(uint32_t bits, vk::MemoryPropertyFlags 
         *memory_type_found = false;
         return ~0;
     } else {
-        throw std::runtime_error("Could not find a matching memory type");
+        throw std::runtime_error("没有适合的设备存储类型");
     }
 }
 
-const vk::PhysicalDeviceProperties& vk_physical_device::properties() const
-{
-    return properties_;
-}
-
-const std::vector<vk::QueueFamilyProperties>& vk_physical_device::queue_family_properties() const
-{
-    return queue_family_properties_;
-}
-
-const vk::PhysicalDeviceFeatures vk_physical_device::requested_features() const
-{
-    return requested_features_;
-}
-
-vk::PhysicalDeviceFeatures& vk_physical_device::mutable_requested_features()
-{
-    return requested_features_;
-}

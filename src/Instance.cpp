@@ -6,7 +6,6 @@
  */
 
 #include "Instance.hpp"
-#include "PhysicalDevice.hpp"
 
 namespace {
 
@@ -30,12 +29,6 @@ vk_instance::vk_instance(vk::Instance instance,
     handle_{instance}, enabled_extensions_(enabled_extensions)
 {
     init_debug_utils();
-
-    if (handle_) {
-        query_gpus();
-    } else {
-        throw std::runtime_error("vk_instance not valid");
-    }
 }
 
 vk_instance::~vk_instance()
@@ -97,53 +90,5 @@ void vk_instance::init_debug_utils()
         VkDebugUtilsMessengerEXT db;
         createDebugUtilsMessengerEXT_(handle_, &dbg_messenger_create_info, nullptr, &db);
         debug_messenger_ = db;
-    }
-}
-
-vk_physical_device& vk_instance::get_first_gpu()
-{
-    assert(!gpus.empty() && "No physical devices were found on the system.");
-
-    // Find a discrete GPU
-    for (auto& gpu: gpus) {
-        if (gpu->properties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu) {
-            return *gpu;
-        }
-    }
-
-    // Otherwise just pick the first one
-    LOGW("Couldn't find a discrete physical device, picking default GPU");
-    return *gpus[0];
-}
-
-
-vk_physical_device& vk_instance::get_suitable_gpu(vk::SurfaceKHR surface)
-{
-    assert(!gpus.empty() && "No physical devices were found on the system.");
-
-    for (auto& gpu: gpus) {
-        if (gpu->properties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu) {
-            size_t        queue_count = gpu->queue_family_properties().size();
-            for (uint32_t queue_idx   = 0; static_cast<size_t>(queue_idx) < queue_count; queue_idx++) {
-                if (gpu->handle().getSurfaceSupportKHR(queue_idx, surface)) {
-                    return *gpu;
-                }
-            }
-        }
-    }
-
-    LOGW("Couldn't find a discrete physical device, picking default GPU");
-    return *gpus[0];
-}
-
-void vk_instance::query_gpus()
-{
-    std::vector<vk::PhysicalDevice> physical_devices = handle_.enumeratePhysicalDevices();
-    if (physical_devices.empty()) {
-        throw std::runtime_error("Couldn't find a physical device that supports Vulkan.");
-    }
-
-    for (auto& physical_device: physical_devices) {
-        gpus.push_back(std::make_unique<vk_physical_device>(*this, physical_device));
     }
 }

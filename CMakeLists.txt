@@ -20,6 +20,9 @@ set(SOURCE_FILES
         src/PhysicalDevice.hpp
         src/Debug.cpp
         src/Debug.hpp
+        src/VkUnit.hpp
+        src/Deivce.cpp
+        src/Deivce.hpp
 )
 
 add_executable(Vk ${SOURCE_FILES})

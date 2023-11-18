@@ -10,8 +10,6 @@
 #include <unordered_set>
 #include "VkCommon.hpp"
 
-class vk_physical_device;
-
 class vk_instance
 {
 public:
@@ -32,10 +30,6 @@ public:
 
     bool is_enabled(const char* extension) const;
 
-    vk_physical_device& get_first_gpu();
-
-    vk_physical_device& get_suitable_gpu(vk::SurfaceKHR);
-
 private:
     void query_gpus();
     void init_debug_utils();
@@ -48,6 +42,4 @@ private:
     PFN_vkCreateDebugUtilsMessengerEXT  createDebugUtilsMessengerEXT_  = nullptr;
     PFN_vkDestroyDebugUtilsMessengerEXT destroyDebugUtilsMessengerEXT_ = nullptr;
     vk::DebugUtilsMessengerEXT          debug_messenger_;
-
-    std::vector<std::unique_ptr<vk_physical_device>> gpus;
 };
