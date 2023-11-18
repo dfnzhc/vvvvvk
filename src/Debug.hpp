@@ -1,8 +1,14 @@
 ﻿/**
- * @File VkInstance.cpp
+ * @File Debug.hpp
  * @Author dfnzhc (https://github.com/dfnzhc)
  * @Date 2023/11/18
  * @Brief 
  */
 
-#include "VkInstance.hpp"
+#pragma once
+
+
+class Debug
+{
+
+};

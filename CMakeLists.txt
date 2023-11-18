@@ -6,14 +6,20 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package (tinyobjloader REQUIRED)
+find_package (spdlog REQUIRED)
 
 set(PROJECT_WORK_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PROJECT_DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Data)
 
 set(SOURCE_FILES
         src/main.cpp
-        src/VkInstance.cpp
-        src/VkInstance.hpp
+        src/Instance.cpp
+        src/Instance.hpp
+        src/VkCommon.hpp
+        src/PhysicalDevice.cpp
+        src/PhysicalDevice.hpp
+        src/Debug.cpp
+        src/Debug.hpp
 )
 
 add_executable(Vk ${SOURCE_FILES})
@@ -42,4 +48,4 @@ target_compile_definitions(Vk
         _PROJECT_DIR_= "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
 
-target_link_libraries(Vk Vulkan::Vulkan glfw glm::glm tinyobjloader::tinyobjloader)
+target_link_libraries(Vk Vulkan::Vulkan glfw glm::glm tinyobjloader::tinyobjloader spdlog::spdlog)

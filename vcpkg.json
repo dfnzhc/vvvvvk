@@ -11,5 +11,8 @@
   }, {
     "name" : "tinyobjloader",
     "version>=" : "2.0.0-rc9"
+  }, {
+    "name" : "spdlog",
+    "version>=" : "1.12.0"
   } ]
 }
