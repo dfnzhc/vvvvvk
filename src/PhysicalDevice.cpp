@@ -6,7 +6,6 @@
  */
 
 #include "PhysicalDevice.hpp"
-#include "Deivce.hpp"
 
 namespace {
 
@@ -15,28 +14,16 @@ uint32_t ScorePhysicalDevice(const vk::PhysicalDevice& device)
     uint32_t score = 0;
     const auto& extensionProperties = device.enumerateDeviceExtensionProperties();
 
-    // 查看逻辑设备请求的扩展是否支持
-    for (const char* currentExtension: vk_device::extensions) {
-        bool extensionFound = false;
-
-        for (const auto& extension: extensionProperties) {
-            if (std::strcmp(currentExtension, extension.extensionName) == 0) {
-                extensionFound = true;
-                break;
-            }
-        }
-
-        if (!extensionFound)
-            return 0;
-    }
-
-    // Obtain the device features and properties of the current device being rateds.
     // 根据设备的功能和特性进行打分
     const auto properties = device.getProperties();
     const auto features   = device.getFeatures();
 
     if (properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
         score += 1000;
+    if (properties.deviceType == vk::PhysicalDeviceType::eIntegratedGpu)
+        score += 500;
+    if (properties.deviceType == vk::PhysicalDeviceType::eCpu)
+        score += 100;
 
     score += properties.limits.maxImageDimension2D;
 

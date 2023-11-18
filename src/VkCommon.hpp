@@ -7,8 +7,12 @@
 
 #pragma once
 
+#include "volk.h"
+
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_to_string.hpp>
+
+#include <vk_mem_alloc.h>
 
 class VulkanException : public std::runtime_error
 {
@@ -53,8 +57,8 @@ private:
 #define VK_CHECK(x)                                                 \
     do                                                              \
     {                                                               \
-        vk::Result err = vk::Result(x);                                         \
-        if (err)                                                    \
+        vk::Result err = static_cast<vk::Result>(x);                \
+        if (err != vk::Result::eSuccess)                            \
         {                                                           \
             LOGE("Detected Vulkan error: {}", vk::to_string(err));  \
             abort();                                                \

@@ -5,8 +5,9 @@ project(VkTestBed)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
-find_package (tinyobjloader REQUIRED)
-find_package (spdlog REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 
 set(PROJECT_WORK_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PROJECT_DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Data)
@@ -23,6 +24,8 @@ set(SOURCE_FILES
         src/VkUnit.hpp
         src/Deivce.cpp
         src/Deivce.hpp
+        src/Queue.cpp
+        src/Queue.hpp
 )
 
 add_executable(Vk ${SOURCE_FILES})
@@ -51,4 +54,13 @@ target_compile_definitions(Vk
         _PROJECT_DIR_= "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
 
-target_link_libraries(Vk Vulkan::Vulkan glfw glm::glm tinyobjloader::tinyobjloader spdlog::spdlog)
+target_link_libraries(Vk 
+#        Vulkan::Vulkan 
+        glfw 
+        glm::glm 
+        tinyobjloader::tinyobjloader 
+        spdlog::spdlog 
+        GPUOpen::VulkanMemoryAllocator)
+
+#message(STATUS ${Vulkan_INCLUDE_DIR})
+target_include_directories(Vk PUBLIC ${Vulkan_INCLUDE_DIR})

@@ -6,6 +6,11 @@
  */
 
 #include "Instance.hpp"
+#include <vulkan/vulkan.hpp>
+
+#if (VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1)
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#endif
 
 namespace {
 
@@ -28,6 +33,9 @@ vk_instance::vk_instance(vk::Instance instance,
                          const std::vector<const char*>& enabled_extensions) :
     handle_{instance}, enabled_extensions_(enabled_extensions)
 {
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(handle_);
+    volkLoadInstance(handle_);
+
     init_debug_utils();
 }
 
