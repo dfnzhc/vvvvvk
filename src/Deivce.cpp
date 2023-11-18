@@ -108,8 +108,9 @@ vk_device::vk_device(vk_physical_device& gpu, vk::SurfaceKHR surface,
             throw VulkanException(vk::Result::eErrorExtensionNotPresent, "扩展不可用");
         }
     }
-
-    vk::DeviceCreateInfo create_info({}, queue_create_infos, {},
+    
+    std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"};
+    vk::DeviceCreateInfo create_info({}, queue_create_infos, layers,
                                      enabled_extensions, &gpu.get_mutable_requested_features());
 
     create_info.pNext = gpu.get_extension_feature_chain();
@@ -182,9 +183,10 @@ vk_device::~vk_device()
 
         vmaDestroyAllocator(memory_allocator);
     }
-
+    
     if (handle()) {
         handle().destroy();
+        handle() = VK_NULL_HANDLE;
     }
 }
 

@@ -23,7 +23,7 @@ public:
               std::unique_ptr<vk_debug_utils>&& debug_utils,
               std::unordered_map<const char*, bool> requested_extensions = {});
 
-    ~vk_device();
+    ~vk_device() override;
 
     vk_device(const vk_device&) = delete;
     vk_device(vk_device&&) = delete;

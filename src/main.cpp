@@ -8,10 +8,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#define VK_NO_PROTOTYPES
-#define VOLK_IMPLEMENTATION
-#include "volk.h"
-
 #include "VkCommon.hpp"
 
 #include "Instance.hpp"
@@ -19,6 +15,7 @@
 #include "Debug.hpp"
 #include "Deivce.hpp"
 #include "Queue.hpp"
+#include "extensions_vk.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -294,6 +291,10 @@ private:
 
     void cleanup()
     {
+        if (device) {
+            device->handle().waitIdle();
+        }
+
         cleanupSwapChain();
 
         vkDestroyPipeline(device->handle(), graphicsPipeline, nullptr);
@@ -328,7 +329,8 @@ private:
         }
 
         vkDestroyCommandPool(device->handle(), commandPool, nullptr);
-        vkDestroyDevice(device->handle(), nullptr);
+        
+        device.reset();
 
         vkDestroySurfaceKHR(instance->handle(), surface, nullptr);
         instance.reset();
@@ -388,7 +390,6 @@ private:
         }
 
         VkInstance inst;
-
         if (vkCreateInstance(&createInfo, nullptr, &inst) != VK_SUCCESS) {
             throw std::runtime_error("failed to create instance!");
         }
@@ -423,12 +424,13 @@ private:
         physicalDevice->get_mutable_requested_features() = physicalDevice->features();
 
         std::unordered_map<const char*, bool> ext;
-        for (const auto                       e: deviceExtensions) {
+        
+        for (const auto e: deviceExtensions) {
             ext[e] = true;
         }
-
+        
         device = std::make_unique<vk_device>(*physicalDevice, surface, std::move(debug_utils), ext);
-        VULKAN_HPP_DEFAULT_DISPATCHER.init(device->handle());
+        load_VK_EXTENSIONS(instance->handle(), vkGetInstanceProcAddr, device->handle(), vkGetDeviceProcAddr);
 
         graphicsQueue = device->get_suitable_graphics_queue().get_handle();
         presentQueue  = device->get_queue_by_present(0).get_handle();
@@ -1619,11 +1621,6 @@ private:
 
 int main()
 {
-    VK_CHECK(volkInitialize());
-
-    static vk::DynamicLoader dl;
-    VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
-
     HelloTriangleApplication app;
     try {
         app.run();
