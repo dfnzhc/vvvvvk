@@ -89,7 +89,7 @@ public:
         debug_name_ = name;
 
         if (device_ && !debug_name_.empty()) {
-            device_->get_debug_utils().set_debug_name(device_->handle(), THandle::objectType, handle_u64(),
+            device_->get_debug_utils().set_debug_name(device_->handle_(), THandle::objectType, handle_u64(),
                                                       debug_name_.c_str());
         }
     }

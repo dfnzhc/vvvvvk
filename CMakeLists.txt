@@ -28,6 +28,8 @@ set(SOURCE_FILES
         src/Queue.hpp
         src/extensions_vk.hpp
         src/extensions_vk.cpp
+        src/SwapChain.cpp
+        src/SwapChain.hpp
 )
 
 add_executable(Vk ${SOURCE_FILES})
