@@ -1,0 +1,15 @@
+{
+  "name" : "vvvvvk",
+  "version-string" : "1.0.0",
+  "builtin-baseline" : "dafef74af53669ef1cc9015f55e0ce809ead62aa",
+  "dependencies" : [ {
+    "name" : "glm",
+    "version>=" : "0.9.9.8#2"
+  }, {
+    "name" : "glfw3",
+    "version>=" : "3.3.8#2"
+  }, {
+    "name" : "tinyobjloader",
+    "version>=" : "2.0.0-rc9"
+  } ]
+}
