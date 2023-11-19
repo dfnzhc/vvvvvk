@@ -32,7 +32,7 @@ public:
     vk_image_view& operator=(vk_image_view&&) = delete;
 
     vk::Format get_format() const;
-    vk_image const& get_image() const;
+    const vk_image& get_image() const;
     void set_image(vk_image& image);
     vk::ImageSubresourceLayers get_subresource_layers() const;
     vk::ImageSubresourceRange get_subresource_range() const;

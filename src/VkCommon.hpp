@@ -25,6 +25,8 @@
 #define VKBP_DISABLE_WARNINGS() __pragma(warning(push, 0))
 #define VKBP_ENABLE_WARNINGS() __pragma(warning(pop))
 
+#define DEFAULT_FENCE_TIMEOUT 100000000000        // Default fence timeout in nanoseconds
+
 template<class T>
 using BindingMap = std::map<uint32_t, std::map<uint32_t, T>>;
 
@@ -134,4 +136,24 @@ struct LoadStoreInfo
 {
     vk::AttachmentLoadOp  load_op  = vk::AttachmentLoadOp::eClear;
     vk::AttachmentStoreOp store_op = vk::AttachmentStoreOp::eStore;
+};
+
+struct BufferMemoryBarrier
+{
+    vk::PipelineStageFlags src_stage_mask  = vk::PipelineStageFlagBits::eBottomOfPipe;
+    vk::PipelineStageFlags dst_stage_mask  = vk::PipelineStageFlagBits::eTopOfPipe;
+    vk::AccessFlags        src_access_mask = {};
+    vk::AccessFlags        dst_access_mask = {};
+};
+
+struct ImageMemoryBarrier
+{
+    vk::PipelineStageFlags src_stage_mask = vk::PipelineStageFlagBits::eBottomOfPipe;
+    vk::PipelineStageFlags dst_stage_mask = vk::PipelineStageFlagBits::eTopOfPipe;
+    vk::AccessFlags        src_access_mask;
+    vk::AccessFlags        dst_access_mask;
+    vk::ImageLayout        old_layout       = vk::ImageLayout::eUndefined;
+    vk::ImageLayout        new_layout       = vk::ImageLayout::eUndefined;
+    uint32_t               old_queue_family = VK_QUEUE_FAMILY_IGNORED;
+    uint32_t               new_queue_family = VK_QUEUE_FAMILY_IGNORED;
 };

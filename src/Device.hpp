@@ -9,11 +9,18 @@
 
 #include "VkCommon.hpp"
 #include "VkUnit.hpp"
+#include "CommandBuffer.hpp"
 #include <vector>
 
 class vk_debug_utils;
+
 class vk_queue;
+
 class vk_physical_device;
+
+class vk_buffer;
+
+class vk_fence_pool;
 
 class vk_device : public vk_unit<vk::Device>
 {
@@ -53,6 +60,27 @@ public:
 
     void wait_idle() const;
 
+    std::pair<vk::Buffer, vk::DeviceMemory> create_buffer(vk::BufferUsageFlags usage,
+                                                          vk::MemoryPropertyFlags properties,
+                                                          vk::DeviceSize size, void* data = nullptr) const;
+
+    std::pair<vk::Image, vk::DeviceMemory> create_image(vk::Format format,
+                                                        const vk::Extent2D& extent,
+                                                        uint32_t mip_levels,
+                                                        vk::ImageUsageFlags usage,
+                                                        vk::MemoryPropertyFlags properties) const;
+
+    void copy_buffer(vk_buffer& src, vk_buffer& dst,
+                     vk::Queue queue, vk::BufferCopy* copy_region = nullptr) const;
+
+
+    vk_command_pool& get_command_pool();
+    vk::CommandBuffer create_command_buffer(vk::CommandBufferLevel level, bool begin = false) const;
+    void flush_command_buffer(vk::CommandBuffer command_buffer,
+                              vk::Queue queue, bool free = true, vk::Semaphore signalSemaphore = VK_NULL_HANDLE) const;
+
+    vk_fence_pool& get_fence_pool();
+
 private:
     const vk_physical_device& gpu;
 
@@ -67,4 +95,8 @@ private:
     VmaAllocator memory_allocator{VK_NULL_HANDLE};
 
     std::vector<std::vector<vk_queue>> queues;
+
+    std::unique_ptr<vk_command_pool> command_pool;
+
+    std::unique_ptr<vk_fence_pool> fence_pool;
 };

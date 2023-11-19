@@ -9,6 +9,9 @@
 #include "Debug.hpp"
 #include "Queue.hpp"
 #include "PhysicalDevice.hpp"
+#include "CommandBufferPool.hpp"
+#include "FencePool.hpp"
+#include "Buffer.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include "volk.h"
@@ -174,10 +177,20 @@ vk_device::vk_device(vk_physical_device& gpu, vk::SurfaceKHR surface,
 
     allocator_info.pVulkanFunctions = &vma_vulkan_func;
     VK_CHECK(vmaCreateAllocator(&allocator_info, &memory_allocator));
+
+
+    command_pool = std::make_unique<vk_command_pool>(*this, get_queue_by_flags(vk::QueueFlagBits::eGraphics |
+                                                                               vk::QueueFlagBits::eCompute,
+                                                                               0).get_family_index());
+
+    fence_pool = std::make_unique<vk_fence_pool>(*this);
 }
 
 vk_device::~vk_device()
 {
+    command_pool.reset();
+    fence_pool.reset();
+
     if (memory_allocator != VK_NULL_HANDLE) {
 //        vm stats;
 //        vmaCalculateStats(memory_allocator, &stats);
@@ -312,4 +325,137 @@ const vk_queue& vk_device::get_suitable_graphics_queue() const
 void vk_device::wait_idle() const
 {
     handle().waitIdle();
+}
+
+std::pair<vk::Buffer, vk::DeviceMemory>
+vk_device::create_buffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::DeviceSize size,
+                         void* data) const
+{
+    vk::Device device = handle();
+
+    // Create the buffer handle
+    vk::BufferCreateInfo buffer_create_info({}, size, usage, vk::SharingMode::eExclusive);
+    vk::Buffer           buffer = device.createBuffer(buffer_create_info);
+
+    // Create the memory backing up the buffer handle
+    vk::MemoryRequirements memory_requirements = device.getBufferMemoryRequirements(buffer);
+    vk::MemoryAllocateInfo memory_allocation(memory_requirements.size,
+                                             get_gpu().memory_type(memory_requirements.memoryTypeBits, properties));
+    vk::DeviceMemory       memory              = device.allocateMemory(memory_allocation);
+
+    // If a pointer to the buffer data has been passed, map the buffer and copy over the
+    if (data != nullptr) {
+        void* mapped = device.mapMemory(memory, 0, size);
+        memcpy(mapped, data, static_cast<size_t>(size));
+        // If host coherency hasn't been requested, do a manual flush to make writes visible
+        if (!(properties & vk::MemoryPropertyFlagBits::eHostCoherent)) {
+            vk::MappedMemoryRange mapped_range(memory, 0, size);
+            device.flushMappedMemoryRanges(mapped_range);
+        }
+        device.unmapMemory(memory);
+    }
+
+    // Attach the memory to the buffer object
+    device.bindBufferMemory(buffer, memory, 0);
+
+    return std::make_pair(buffer, memory);
+}
+
+std::pair<vk::Image, vk::DeviceMemory>
+vk_device::create_image(vk::Format format, const vk::Extent2D& extent, uint32_t mip_levels, vk::ImageUsageFlags usage,
+                        vk::MemoryPropertyFlags properties) const
+{
+    vk::Device device = handle();
+
+    vk::ImageCreateInfo image_create_info({}, vk::ImageType::e2D, format, vk::Extent3D(extent, 1), mip_levels, 1,
+                                          vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, usage);
+
+    vk::Image image = device.createImage(image_create_info);
+
+    vk::MemoryRequirements memory_requirements = device.getImageMemoryRequirements(image);
+
+    vk::MemoryAllocateInfo memory_allocation(memory_requirements.size,
+                                             get_gpu().memory_type(memory_requirements.memoryTypeBits, properties));
+    vk::DeviceMemory       memory = device.allocateMemory(memory_allocation);
+    device.bindImageMemory(image, memory, 0);
+
+    return std::make_pair(image, memory);
+}
+
+void vk_device::copy_buffer(vk_buffer& src, vk_buffer& dst, vk::Queue queue, vk::BufferCopy* copy_region) const
+{
+    assert(dst.get_size() <= src.get_size());
+    assert(src.handle());
+
+    vk::CommandBuffer command_buffer = create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
+
+    vk::BufferCopy buffer_copy{};
+    if (copy_region) {
+        buffer_copy = *copy_region;
+    } else {
+        buffer_copy.size = src.get_size();
+    }
+
+    command_buffer.copyBuffer(src.handle(), dst.handle(), buffer_copy);
+
+    flush_command_buffer(command_buffer, queue);
+}
+
+vk_command_pool& vk_device::get_command_pool()
+{
+    return *command_pool;
+}
+
+vk::CommandBuffer vk_device::create_command_buffer(vk::CommandBufferLevel level, bool begin) const
+{
+    assert(command_pool && "No command pool exists in the device");
+
+    vk::CommandBuffer command_buffer = handle().allocateCommandBuffers(
+        {command_pool->get_handle(), level, 1}).front();
+
+    // If requested, also start recording for the new command buffer
+    if (begin) {
+        command_buffer.begin(vk::CommandBufferBeginInfo());
+    }
+
+    return command_buffer;
+}
+
+void vk_device::flush_command_buffer(vk::CommandBuffer command_buffer, vk::Queue queue, bool free,
+                                     vk::Semaphore signalSemaphore) const
+{
+    if (!command_buffer) {
+        return;
+    }
+
+    command_buffer.end();
+
+    vk::SubmitInfo submit_info({}, {}, command_buffer);
+    if (signalSemaphore) {
+        submit_info.setSignalSemaphores(signalSemaphore);
+    }
+
+    // Create fence to ensure that the command buffer has finished executing
+    vk::Fence fence = handle().createFence({});
+
+    // Submit to the queue
+    queue.submit(submit_info, fence);
+
+    // Wait for the fence to signal that command buffer has finished executing
+    vk::Result result = handle().waitForFences(fence, true, DEFAULT_FENCE_TIMEOUT);
+    if (result != vk::Result::eSuccess) {
+        LOGE("Detected Vulkan error: {}", vk::to_string(result));
+        abort();
+    }
+
+    handle().destroyFence(fence);
+
+    if (command_pool && free) {
+        handle().freeCommandBuffers(command_pool->get_handle(), command_buffer);
+    }
+}
+
+vk_fence_pool& vk_device::get_fence_pool()
+{
+    return *fence_pool;
 }

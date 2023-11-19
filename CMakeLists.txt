@@ -68,6 +68,8 @@ set(SOURCE_FILES
         src/Framebuffer.hpp
         src/Renderpass.cpp
         src/Renderpass.hpp
+        src/Sampler.cpp
+        src/Sampler.hpp
 )
 
 add_executable(Vk ${SOURCE_FILES})

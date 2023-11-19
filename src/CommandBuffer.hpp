@@ -9,6 +9,11 @@
 
 #include "VkCommon.hpp"
 #include "VkUnit.hpp"
+#include "Buffer.hpp"
+#include "Image.hpp"
+#include "ImageView.hpp"
+#include "Renderpass.hpp"
+#include "Framebuffer.hpp"
 
 class vk_command_pool;
 
@@ -36,7 +41,22 @@ public:
 	 */
     vk::Result reset(reset_mode reset_mode);
 
+    vk::Result begin(vk::CommandBufferUsageFlags flags, vk_command_buffer* primary_cmd_buf = nullptr);
+    vk::Result begin(vk::CommandBufferUsageFlags flags, const vk_renderpass* render_pass,
+                     const vk_framebuffer* framebuffer, uint32_t subpass_index);
+
+    vk::Result end();
+    
+    // @formatter:off
+    void copy_buffer(const vk_buffer& src_buffer, const vk_buffer& dst_buffer, vk::DeviceSize size);
+    void copy_image(const vk_image& src_img, const vk_image& dst_img, const std::vector<vk::ImageCopy>& regions);
+    
+    void copy_buffer_to_image(const vk_buffer& buffer, const vk_image& image, const std::vector<vk::BufferImageCopy>& regions);
+    void copy_image_to_buffer(const vk_image& image, vk::ImageLayout image_layout, const vk_buffer& buffer, const std::vector<vk::BufferImageCopy>& regions);
+    // @formatter:on
+    void image_memory_barrier(const vk_image_view& image_view, const ImageMemoryBarrier& memory_barrier) const;
+
 private:
     const vk::CommandBufferLevel level = {};
-    vk_command_pool              & command_pool;
+    vk_command_pool& command_pool;
 };

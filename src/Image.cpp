@@ -49,8 +49,8 @@ vk_image::vk_image(vk_device& device,
     array_layer_count{array_layers},
     tiling{tiling}
 {
-    assert(0 < mip_levels && "图像只要有一个 mip 等级");
-    assert(0 < array_layers && "图像只有有一个层级");
+    assert(0 < mip_levels && "图像至少有一个 mip 等级");
+    assert(0 < array_layers && "图像至少有一个层级");
 
     subresource.mipLevel   = mip_levels;
     subresource.arrayLayer = array_layers;
@@ -72,9 +72,9 @@ vk_image::vk_image(vk_device& device,
     }
 
     auto result = vmaCreateImage(device.get_memory_allocator(),
-                                 reinterpret_cast<VkImageCreateInfo const*>(&image_info),
+                                 reinterpret_cast<const VkImageCreateInfo*>(&image_info),
                                  &memory_info,
-                                 const_cast<VkImage*>(reinterpret_cast<VkImage const*>(&handle())),
+                                 const_cast<VkImage*>(reinterpret_cast<const VkImage*>(&handle())),
                                  &memory,
                                  nullptr);
 
@@ -96,7 +96,7 @@ vk_image::vk_image(vk_device& device,
     subresource.arrayLayer = 1;
 }
 
-vk_image::vk_image(vk_image&& other)  noexcept :
+vk_image::vk_image(vk_image&& other) noexcept :
     vk_unit{std::move(other)},
     memory(std::exchange(other.memory, {})),
     type(std::exchange(other.type, {})),
