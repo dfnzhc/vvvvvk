@@ -8,7 +8,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#define VK_NO_PROTOTYPES
 #define VOLK_IMPLEMENTATION
 #include "volk.h"
 
@@ -17,9 +16,12 @@
 #include "Instance.hpp"
 #include "PhysicalDevice.hpp"
 #include "Debug.hpp"
-#include "Deivce.hpp"
+#include "Device.hpp"
 #include "Queue.hpp"
 #include "SwapChain.hpp"
+#include "FencePool.hpp"
+#include "CommandBuffer.hpp"
+#include "CommandBufferPool.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -1328,7 +1330,7 @@ private:
         vkWaitForFences(device->handle(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 //        uint32_t imageIndex;
-        auto [result1, imageIndex] = swapchain->acquire_next_image(imageAvailableSemaphores[currentFrame]);
+        auto [result1, imageIndex] = swapchain->acquire(imageAvailableSemaphores[currentFrame]);
 //        VkResult result = vkAcquireNextImageKHR(device->handle(), swapChain, UINT64_MAX,
 //                                                imageAvailableSemaphores[currentFrame],
 //                                                VK_NULL_HANDLE, &imageIndex);

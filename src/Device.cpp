@@ -5,12 +5,13 @@
  * @Brief 
  */
 
-#include "Deivce.hpp"
+#include "Device.hpp"
 #include "Debug.hpp"
 #include "Queue.hpp"
 #include "PhysicalDevice.hpp"
 
 #include <vulkan/vulkan.hpp>
+#include "volk.h"
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -108,14 +109,14 @@ vk_device::vk_device(vk_physical_device& gpu, vk::SurfaceKHR surface,
             throw VulkanException(vk::Result::eErrorExtensionNotPresent, "扩展不可用");
         }
     }
-    
+
     std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"};
-    vk::DeviceCreateInfo create_info({}, queue_create_infos, layers,
-                                     enabled_extensions, &gpu.get_mutable_requested_features());
+    vk::DeviceCreateInfo     create_info({}, queue_create_infos, layers,
+                                         enabled_extensions, &gpu.get_mutable_requested_features());
 
     create_info.pNext = gpu.get_extension_feature_chain();
     set_handle(gpu.handle().createDevice(create_info));
-    
+
     VULKAN_HPP_DEFAULT_DISPATCHER.init(handle());
 
     queues.resize(queue_family_properties.size());
@@ -164,7 +165,7 @@ vk_device::vk_device(vk_physical_device& gpu, vk::SurfaceKHR surface,
     }
 
     vma_vulkan_func.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
-    vma_vulkan_func.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+    vma_vulkan_func.vkGetDeviceProcAddr   = vkGetDeviceProcAddr;
 
     if (is_extension_supported(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME) &&
         is_enabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME)) {
@@ -185,7 +186,7 @@ vk_device::~vk_device()
 
         vmaDestroyAllocator(memory_allocator);
     }
-    
+
     if (handle()) {
         handle().destroy();
         handle() = VK_NULL_HANDLE;
@@ -306,4 +307,9 @@ const vk_queue& vk_device::get_suitable_graphics_queue() const
     }
 
     return get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
+}
+
+void vk_device::wait_idle() const
+{
+    handle().waitIdle();
 }

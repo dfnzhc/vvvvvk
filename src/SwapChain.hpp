@@ -9,9 +9,9 @@
 
 #include <set>
 #include "VkCommon.hpp"
-#include "Deivce.hpp"
+#include "Device.hpp"
 
-struct swapchain_properties
+struct swapchain_desc
 {
     vk::SwapchainKHR                old_swapchain;
     uint32_t                        image_count{3};
@@ -73,7 +73,7 @@ public:
     vk_swapchain& operator=(vk_swapchain&&) = delete;
 
     // @formatter:off
-    std::pair<vk::Result, uint32_t> acquire_next_image(vk::Semaphore image_acquired_semaphore, vk::Fence fence = nullptr) const;
+    std::pair<vk::Result, uint32_t> acquire(vk::Semaphore image_acquired_semaphore, vk::Fence fence = nullptr) const;
     // @formatter:on
 
     bool is_valid() const;
@@ -109,7 +109,7 @@ private:
 
     std::vector<vk::PresentModeKHR> present_modes_;
 
-    swapchain_properties properties_;
+    swapchain_desc properties_;
 
     // 按优先度排序的一组显示模式
     std::vector<vk::PresentModeKHR> present_mode_priority_list_;

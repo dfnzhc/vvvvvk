@@ -96,6 +96,7 @@ vk::SurfaceFormatKHR choose_surface_format(const vk::SurfaceFormatKHR requested_
     LOGW("不支持的交换链格式 ({}). 选择的格式为 ({}).",
          vk::to_string(requested_surface_format.format) + ", " + vk::to_string(requested_surface_format.colorSpace),
          vk::to_string(chosen_surface_format.format) + ", " + vk::to_string(chosen_surface_format.colorSpace));
+    
     return chosen_surface_format;
 }
 
@@ -362,7 +363,7 @@ vk::SwapchainKHR vk_swapchain::handle() const
 }
 
 std::pair<vk::Result, uint32_t>
-vk_swapchain::acquire_next_image(vk::Semaphore image_acquired_semaphore, vk::Fence fence) const
+vk_swapchain::acquire(vk::Semaphore image_acquired_semaphore, vk::Fence fence) const
 {
     vk::ResultValue<uint32_t> rv = device_.handle()
         .acquireNextImageKHR(handle_, std::numeric_limits<uint64_t>::max(), image_acquired_semaphore, fence);

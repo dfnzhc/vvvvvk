@@ -6,7 +6,8 @@
  */
 
 #include "Queue.hpp"
-#include "Deivce.hpp"
+#include "Device.hpp"
+#include "CommandBuffer.hpp"
 
 vk_queue::vk_queue(vk_device& device, uint32_t family_index, vk::QueueFamilyProperties properties,
                    vk::Bool32 can_present, uint32_t index) :
@@ -57,12 +58,12 @@ vk::Bool32 vk_queue::support_present() const
     return can_present;
 }
 
-//void HPPQueue::submit(const HPPCommandBuffer& command_buffer, vk::Fence fence) const
-//{
-//    vk::CommandBuffer commandBuffer = command_buffer.get_handle();
-//    vk::SubmitInfo    submit_info({}, {}, commandBuffer);
-//    handle.submit(submit_info, fence);
-//}
+void vk_queue::submit(const vk_command_buffer& command_buffer, vk::Fence fence) const
+{
+    vk::CommandBuffer commandBuffer = command_buffer.handle();
+    vk::SubmitInfo    submit_info({}, {}, commandBuffer);
+    handle.submit(submit_info, fence);
+}
 
 vk::Result vk_queue::present(const vk::PresentInfoKHR& present_info) const
 {

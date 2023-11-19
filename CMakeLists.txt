@@ -9,6 +9,8 @@ find_package(tinyobjloader CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 
+add_subdirectory(third_party)
+
 set(PROJECT_WORK_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PROJECT_DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Data)
 
@@ -22,12 +24,46 @@ set(SOURCE_FILES
         src/Debug.cpp
         src/Debug.hpp
         src/VkUnit.hpp
-        src/Deivce.cpp
-        src/Deivce.hpp
+        src/Device.cpp
+        src/Device.hpp
         src/Queue.cpp
         src/Queue.hpp
         src/SwapChain.cpp
         src/SwapChain.hpp
+        src/RenderContext.cpp
+        src/RenderContext.hpp
+        src/Image.cpp
+        src/Image.hpp
+        src/ImageView.cpp
+        src/ImageView.hpp
+        src/RenderTarget.cpp
+        src/RenderTarget.hpp
+        src/RenderFrame.cpp
+        src/RenderFrame.hpp
+        src/FencePool.cpp
+        src/FencePool.hpp
+        src/SemaphorePool.cpp
+        src/SemaphorePool.hpp
+        src/CommandBuffer.cpp
+        src/CommandBuffer.hpp
+        src/CommandBufferPool.cpp
+        src/CommandBufferPool.hpp
+        src/Buffer.cpp
+        src/Buffer.hpp
+        src/BufferPool.cpp
+        src/BufferPool.hpp
+        src/Helpers.hpp
+        src/DescriptorSetLayout.cpp
+        src/DescriptorSetLayout.hpp
+        src/ShaderModule.cpp
+        src/ShaderModule.hpp
+        src/ShaderUtils.hpp
+        src/ShaderUtils.cpp
+        src/DescriptorPool.cpp
+        src/DescriptorPool.hpp
+        src/DescriptorSet.cpp
+        src/DescriptorSet.hpp
+        src/ResourceCaching.hpp
 )
 
 add_executable(Vk ${SOURCE_FILES})
@@ -62,7 +98,15 @@ target_link_libraries(Vk
         glm::glm 
         tinyobjloader::tinyobjloader 
         spdlog::spdlog 
-        GPUOpen::VulkanMemoryAllocator)
+        GPUOpen::VulkanMemoryAllocator
+        SPIRV
+        glslang 
+        glslang-default-resource-limits
+        spirv-cross-glsl
+)
 
 #message(STATUS ${Vulkan_INCLUDE_DIR})
-target_include_directories(Vk PUBLIC ${Vulkan_INCLUDE_DIR})
+target_include_directories(Vk 
+        PUBLIC 
+        ${Vulkan_INCLUDE_DIR}
+)

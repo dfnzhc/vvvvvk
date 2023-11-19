@@ -51,6 +51,8 @@ public:
 
     uint32_t get_queue_family_index(vk::QueueFlagBits queue_flag) const;
 
+    void wait_idle() const;
+
 private:
     const vk_physical_device& gpu;
 
