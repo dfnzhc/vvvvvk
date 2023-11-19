@@ -64,6 +64,10 @@ set(SOURCE_FILES
         src/DescriptorSet.cpp
         src/DescriptorSet.hpp
         src/ResourceCaching.hpp
+        src/Framebuffer.cpp
+        src/Framebuffer.hpp
+        src/Renderpass.cpp
+        src/Renderpass.hpp
 )
 
 add_executable(Vk ${SOURCE_FILES})

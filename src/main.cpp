@@ -1,3 +1,4 @@
+#include "ImageView.hpp"
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
@@ -22,6 +23,9 @@
 #include "FencePool.hpp"
 #include "CommandBuffer.hpp"
 #include "CommandBufferPool.hpp"
+#include "RenderContext.hpp"
+#include "Renderpass.hpp"
+#include "Framebuffer.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -161,7 +165,7 @@ private:
     GLFWwindow* window;
 
     std::unique_ptr<vk_instance> instance;
-    VkSurfaceKHR                 surface;
+    vk::SurfaceKHR               surface;
 
     std::unique_ptr<vk_physical_device> physicalDevice;
     std::unique_ptr<vk_device>          device;
@@ -169,13 +173,14 @@ private:
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 
-    std::unique_ptr<vk_swapchain> swapchain;
-    VkFormat                      swapChainImageFormat;
-    VkExtent2D                    swapChainExtent;
-    std::vector<VkImageView>      swapChainImageViews;
-    std::vector<VkFramebuffer>    swapChainFramebuffers;
+    VkFormat   swapChainImageFormat;
+    VkExtent2D swapChainExtent;
 
-    VkRenderPass          renderPass;
+    std::vector<vk_framebuffer>        framebuffers;
+    std::unique_ptr<vk_render_context> render_context;
+
+    VkRenderPass renderPass;
+
     VkDescriptorSetLayout descriptorSetLayout;
     VkPipelineLayout      pipelineLayout;
     VkPipeline            graphicsPipeline;
@@ -283,15 +288,17 @@ private:
         vkDestroyImage(device->handle(), depthImage, nullptr);
         vkFreeMemory(device->handle(), depthImageMemory, nullptr);
 
-        for (auto framebuffer: swapChainFramebuffers) {
-            vkDestroyFramebuffer(device->handle(), framebuffer, nullptr);
-        }
+        std::vector<vk_framebuffer>().swap(framebuffers);
 
-        for (auto imageView: swapChainImageViews) {
-            vkDestroyImageView(device->handle(), imageView, nullptr);
-        }
+//        for (auto framebuffer: swapChainFramebuffers) {
+//            vkDestroyFramebuffer(device->handle(), framebuffer, nullptr);
+//        }
 
-        swapchain.reset();
+//        for (auto imageView: swapChainImageViews) {
+//            vkDestroyImageView(device->handle(), imageView, nullptr);
+//        }
+
+//        render_context.reset();
     }
 
     void cleanup()
@@ -301,6 +308,7 @@ private:
         }
 
         cleanupSwapChain();
+        render_context.reset();
 
         vkDestroyPipeline(device->handle(), graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device->handle(), pipelineLayout, nullptr);
@@ -358,8 +366,10 @@ private:
 
         cleanupSwapChain();
 
-        createSwapChain();
-        createImageViews();
+        render_context->handle_surface_changes();
+        swapChainExtent = render_context->get_surface_extent();
+//        createSwapChain();
+//        createImageViews();
         createDepthResources();
         createFramebuffers();
     }
@@ -404,9 +414,12 @@ private:
 
     void createSurface()
     {
-        if (glfwCreateWindowSurface(instance->handle(), window, nullptr, &surface) != VK_SUCCESS) {
+        VkSurfaceKHR sur;
+        if (glfwCreateWindowSurface(instance->handle(), window, nullptr, &sur) != VK_SUCCESS) {
             throw std::runtime_error("failed to create window surface!");
         }
+
+        surface = sur;
     }
 
     void pickPhysicalDevice()
@@ -438,21 +451,33 @@ private:
 
     void createSwapChain()
     {
-        swapchain = std::make_unique<vk_swapchain>(*device, surface, vk::PresentModeKHR::eFifo);
+        auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+                                                                       {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
-        swapChainImageFormat = VkFormat(swapchain->format());
-        swapChainExtent      = swapchain->extent();
+        vk::PresentModeKHR              present_mode = vk::PresentModeKHR::eFifo;
+        std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox,
+                                                                   vk::PresentModeKHR::eFifo,
+                                                                   vk::PresentModeKHR::eImmediate};
+
+        render_context = std::make_unique<vk_render_context>(*device, surface,
+                                                             vk::Extent2D{WIDTH, HEIGHT},
+                                                             present_mode, present_mode_priority_list,
+                                                             surface_priority_list);
+        render_context->prepare();
+
+        swapChainImageFormat = VkFormat(render_context->get_format());
+        swapChainExtent      = render_context->get_surface_extent();
     }
 
     void createImageViews()
     {
-        const auto& swapChainImage = swapchain->images();
-        swapChainImageViews.resize(swapChainImage.size());
-
-        for (uint32_t i = 0; i < swapChainImage.size(); i++) {
-            swapChainImageViews[i] = createImageView(swapChainImage[i], swapChainImageFormat,
-                                                     VK_IMAGE_ASPECT_COLOR_BIT);
-        }
+//        const auto& swapChainImage = render_context->get_swapchain().images();
+//        swapChainImageViews.resize(swapChainImage.size());
+//
+//        for (uint32_t i = 0; i < swapChainImage.size(); i++) {
+//            swapChainImageViews[i] = createImageView(swapChainImage[i], swapChainImageFormat,
+//                                                     VK_IMAGE_ASPECT_COLOR_BIT);
+//        }
     }
 
     void createRenderPass()
@@ -492,13 +517,13 @@ private:
         subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
         VkSubpassDependency dependency{};
-        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubpass = 0;
-        dependency.srcStageMask =
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
+        dependency.dstSubpass    = 0;
+        dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                   VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
         dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        dependency.dstStageMask =
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                   VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
         std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
@@ -671,28 +696,37 @@ private:
 
     void createFramebuffers()
     {
-        swapChainFramebuffers.resize(swapChainImageViews.size());
-
-        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-            std::array<VkImageView, 2> attachments = {
-                swapChainImageViews[i],
-                depthImageView
-            };
-
-            VkFramebufferCreateInfo framebufferInfo{};
-            framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass      = renderPass;
-            framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-            framebufferInfo.pAttachments    = attachments.data();
-            framebufferInfo.width           = swapChainExtent.width;
-            framebufferInfo.height          = swapChainExtent.height;
-            framebufferInfo.layers          = 1;
-
-            if (vkCreateFramebuffer(device->handle(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]) !=
-                VK_SUCCESS) {
-                throw std::runtime_error("failed to create framebuffer!");
-            }
+        const auto     & frames = render_context->get_render_frames();
+        for (const auto& frame: frames) {
+            framebuffers.emplace_back(*device, frame->get_render_target(), renderPass);
         }
+//
+//        for (size_t i = 0; i < frames.size(); i++) {
+//            std::vector<VkImageView> attachments;
+//
+//            for (auto& view: frames[i]->get_render_target().get_views()) {
+//                attachments.emplace_back(view.handle());
+//            }
+//
+////            std::array<VkImageView, 2> attachments = {
+////                swapChainImageViews[i],
+////                depthImageView
+////            };
+//
+//            VkFramebufferCreateInfo framebufferInfo{};
+//            framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+//            framebufferInfo.renderPass      = renderPass;
+//            framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+//            framebufferInfo.pAttachments    = attachments.data();
+//            framebufferInfo.width           = swapChainExtent.width;
+//            framebufferInfo.height          = swapChainExtent.height;
+//            framebufferInfo.layers          = 1;
+//
+//            if (vkCreateFramebuffer(device->handle(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]) !=
+//                VK_SUCCESS) {
+//                throw std::runtime_error("failed to create framebuffer!");
+//            }
+//        }
     }
 
     void createCommandPool()
@@ -1237,7 +1271,7 @@ private:
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass        = renderPass;
-        renderPassInfo.framebuffer       = swapChainFramebuffers[imageIndex];
+        renderPassInfo.framebuffer       = framebuffers[imageIndex].get_handle();
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = swapChainExtent;
 
@@ -1330,7 +1364,7 @@ private:
         vkWaitForFences(device->handle(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 //        uint32_t imageIndex;
-        auto [result1, imageIndex] = swapchain->acquire(imageAvailableSemaphores[currentFrame]);
+        auto [result1, imageIndex] = render_context->get_swapchain().acquire(imageAvailableSemaphores[currentFrame]);
 //        VkResult result = vkAcquireNextImageKHR(device->handle(), swapChain, UINT64_MAX,
 //                                                imageAvailableSemaphores[currentFrame],
 //                                                VK_NULL_HANDLE, &imageIndex);
@@ -1376,7 +1410,7 @@ private:
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores    = signalSemaphores;
 
-        VkSwapchainKHR swapChains[] = {swapchain->handle()};
+        VkSwapchainKHR swapChains[] = {render_context->get_swapchain().handle()};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains    = swapChains;
 

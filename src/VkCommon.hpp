@@ -25,7 +25,7 @@
 #define VKBP_DISABLE_WARNINGS() __pragma(warning(push, 0))
 #define VKBP_ENABLE_WARNINGS() __pragma(warning(pop))
 
-template <class T>
+template<class T>
 using BindingMap = std::map<uint32_t, std::map<uint32_t, T>>;
 
 class VulkanException : public std::runtime_error
@@ -130,3 +130,8 @@ inline vk::Format get_suitable_depth_format(vk::PhysicalDevice physical_device,
     throw std::runtime_error("没有适合的深度格式");
 }
 
+struct LoadStoreInfo
+{
+    vk::AttachmentLoadOp  load_op  = vk::AttachmentLoadOp::eClear;
+    vk::AttachmentStoreOp store_op = vk::AttachmentStoreOp::eStore;
+};
