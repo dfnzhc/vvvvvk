@@ -39,7 +39,5 @@ private:
 
     std::vector<const char*> enabled_extensions_;
 
-    PFN_vkCreateDebugUtilsMessengerEXT  createDebugUtilsMessengerEXT_  = nullptr;
-    PFN_vkDestroyDebugUtilsMessengerEXT destroyDebugUtilsMessengerEXT_ = nullptr;
     vk::DebugUtilsMessengerEXT          debug_messenger_;
 };

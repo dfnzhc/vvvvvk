@@ -26,8 +26,6 @@ set(SOURCE_FILES
         src/Deivce.hpp
         src/Queue.cpp
         src/Queue.hpp
-        src/extensions_vk.hpp
-        src/extensions_vk.cpp
         src/SwapChain.cpp
         src/SwapChain.hpp
 )
@@ -59,7 +57,7 @@ target_compile_definitions(Vk
 )
 
 target_link_libraries(Vk 
-        Vulkan::Vulkan 
+#        Vulkan::Vulkan 
         glfw 
         glm::glm 
         tinyobjloader::tinyobjloader 
@@ -67,4 +65,4 @@ target_link_libraries(Vk
         GPUOpen::VulkanMemoryAllocator)
 
 #message(STATUS ${Vulkan_INCLUDE_DIR})
-#target_include_directories(Vk PUBLIC ${Vulkan_INCLUDE_DIR})
+target_include_directories(Vk PUBLIC ${Vulkan_INCLUDE_DIR})

@@ -115,6 +115,8 @@ vk_device::vk_device(vk_physical_device& gpu, vk::SurfaceKHR surface,
 
     create_info.pNext = gpu.get_extension_feature_chain();
     set_handle(gpu.handle().createDevice(create_info));
+    
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(handle());
 
     queues.resize(queue_family_properties.size());
     for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_properties.size(); ++queue_family_index) {

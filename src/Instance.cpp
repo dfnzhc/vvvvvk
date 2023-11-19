@@ -8,6 +8,10 @@
 #include "Instance.hpp"
 #include <vulkan/vulkan.hpp>
 
+#if (VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1)
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#endif
+
 namespace {
 
 VkBool32 debugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
@@ -29,13 +33,15 @@ vk_instance::vk_instance(vk::Instance instance,
                          const std::vector<const char*>& enabled_extensions) :
     handle_{instance}, enabled_extensions_(enabled_extensions)
 {
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(handle_);
+    volkLoadInstance(handle_);
     init_debug_utils();
 }
 
 vk_instance::~vk_instance()
 {
-    if (destroyDebugUtilsMessengerEXT_) {
-        destroyDebugUtilsMessengerEXT_(handle_, debug_messenger_, nullptr);
+    if (debug_messenger_) {
+        handle_.destroyDebugUtilsMessengerEXT(debug_messenger_, nullptr);
         debug_messenger_ = VK_NULL_HANDLE;
     }
 
@@ -43,8 +49,6 @@ vk_instance::~vk_instance()
         handle_.destroy();
     }
 
-    createDebugUtilsMessengerEXT_  = nullptr;
-    destroyDebugUtilsMessengerEXT_ = nullptr;
 }
 
 const std::vector<const char*>& vk_instance::extensions()
@@ -68,28 +72,18 @@ bool vk_instance::is_enabled(const char* extension) const
 
 void vk_instance::init_debug_utils()
 {
-    createDebugUtilsMessengerEXT_  =
-        (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(handle_, "vkCreateDebugUtilsMessengerEXT");
-    destroyDebugUtilsMessengerEXT_ =
-        (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(handle_, "vkDestroyDebugUtilsMessengerEXT");
+    vk::DebugUtilsMessengerCreateInfoEXT dbg_messenger_create_info;
+    dbg_messenger_create_info.messageSeverity =
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo       // For debug printf
+        | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning  // GPU info, bug
+        | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;   // Invalid usage
+    dbg_messenger_create_info.messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral            // Other
+                                                |
+                                                vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation       // Violation of spec
+                                                |
+                                                vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;     // Non-optimal use
+    dbg_messenger_create_info.pfnUserCallback = debugMessengerCallback;
+    dbg_messenger_create_info.pUserData       = this;
 
-    if (createDebugUtilsMessengerEXT_ != nullptr) {
-        VkDebugUtilsMessengerCreateInfoEXT dbg_messenger_create_info{
-            VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-        dbg_messenger_create_info.messageSeverity =
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT       // For debug printf
-            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT  // GPU info, bug
-            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;   // Invalid usage
-        dbg_messenger_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT            // Other
-                                                    |
-                                                    VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT       // Violation of spec
-                                                    |
-                                                    VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;     // Non-optimal use
-        dbg_messenger_create_info.pfnUserCallback = debugMessengerCallback;
-        dbg_messenger_create_info.pUserData       = this;
-
-        VkDebugUtilsMessengerEXT db;
-        createDebugUtilsMessengerEXT_(handle_, &dbg_messenger_create_info, nullptr, &db);
-        debug_messenger_ = db;
-    }
+    debug_messenger_ = handle_.createDebugUtilsMessengerEXT(dbg_messenger_create_info);
 }
