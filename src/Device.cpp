@@ -15,6 +15,8 @@
 
 #include <vulkan/vulkan.hpp>
 #include "volk.h"
+#include "VkUtils.hpp"
+#include "Commands.hpp"
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -178,17 +180,23 @@ vk_device::vk_device(vk_physical_device& gpu, vk::SurfaceKHR surface,
     allocator_info.pVulkanFunctions = &vma_vulkan_func;
     VK_CHECK(vmaCreateAllocator(&allocator_info, &memory_allocator));
 
+    queue_ = &get_suitable_graphics_queue();
 
-    command_pool = std::make_unique<vk_command_pool>(*this, get_queue_by_flags(vk::QueueFlagBits::eGraphics |
-                                                                               vk::QueueFlagBits::eCompute,
-                                                                               0).get_family_index());
+    vk::CommandPoolCreateInfo cpInfo;
+    cpInfo.flags            = vk::CommandPoolCreateFlagBits::eTransient;
+    cpInfo.queueFamilyIndex = queue_->get_family_index();
+    commandPool = handle().createCommandPool(cpInfo);
 
     fence_pool = std::make_unique<vk_fence_pool>(*this);
 }
 
 vk_device::~vk_device()
 {
-    command_pool.reset();
+    if (commandPool) {
+        handle().destroyCommandPool(commandPool);
+        commandPool = VK_NULL_HANDLE;
+    }
+
     fence_pool.reset();
 
     if (memory_allocator != VK_NULL_HANDLE) {
@@ -382,80 +390,64 @@ vk_device::create_image(vk::Format format, const vk::Extent2D& extent, uint32_t 
     return std::make_pair(image, memory);
 }
 
-void vk_device::copy_buffer(vk_buffer& src, vk_buffer& dst, vk::Queue queue, vk::BufferCopy* copy_region) const
-{
-    assert(dst.get_size() <= src.get_size());
-    assert(src.handle());
-
-    vk::CommandBuffer command_buffer = create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
-
-    vk::BufferCopy buffer_copy{};
-    if (copy_region) {
-        buffer_copy = *copy_region;
-    } else {
-        buffer_copy.size = src.get_size();
-    }
-
-    command_buffer.copyBuffer(src.handle(), dst.handle(), buffer_copy);
-
-    flush_command_buffer(command_buffer, queue);
-}
-
-vk_command_pool& vk_device::get_command_pool()
-{
-    return *command_pool;
-}
-
-vk::CommandBuffer vk_device::create_command_buffer(vk::CommandBufferLevel level, bool begin) const
-{
-    assert(command_pool && "No command pool exists in the device");
-
-    vk::CommandBuffer command_buffer = handle().allocateCommandBuffers(
-        {command_pool->get_handle(), level, 1}).front();
-
-    // If requested, also start recording for the new command buffer
-    if (begin) {
-        command_buffer.begin(vk::CommandBufferBeginInfo());
-    }
-
-    return command_buffer;
-}
-
-void vk_device::flush_command_buffer(vk::CommandBuffer command_buffer, vk::Queue queue, bool free,
-                                     vk::Semaphore signalSemaphore) const
-{
-    if (!command_buffer) {
-        return;
-    }
-
-    command_buffer.end();
-
-    vk::SubmitInfo submit_info({}, {}, command_buffer);
-    if (signalSemaphore) {
-        submit_info.setSignalSemaphores(signalSemaphore);
-    }
-
-    // Create fence to ensure that the command buffer has finished executing
-    vk::Fence fence = handle().createFence({});
-
-    // Submit to the queue
-    queue.submit(submit_info, fence);
-
-    // Wait for the fence to signal that command buffer has finished executing
-    vk::Result result = handle().waitForFences(fence, true, DEFAULT_FENCE_TIMEOUT);
-    if (result != vk::Result::eSuccess) {
-        LOGE("Detected Vulkan error: {}", vk::to_string(result));
-        abort();
-    }
-
-    handle().destroyFence(fence);
-
-    if (command_pool && free) {
-        handle().freeCommandBuffers(command_pool->get_handle(), command_buffer);
-    }
-}
-
 vk_fence_pool& vk_device::get_fence_pool()
 {
     return *fence_pool;
+}
+
+std::unique_ptr<vk_buffer> vk_device::createBuffer(const vk::DeviceSize& size,
+                                                   const void* data,
+                                                   vk::BufferUsageFlags usage,
+                                                   vk::MemoryPropertyFlags memProps)
+{
+    if (data != nullptr) {
+        usage |= vk::BufferUsageFlagBits::eTransferDst;
+    }
+
+    auto buffer = std::make_unique<vk_buffer>(*this, size, usage, vkToVmaMemoryUsage(memProps), 0);
+
+    if (data != nullptr) {
+        auto staging = vk_buffer(*this, size, usage | vk::BufferUsageFlagBits::eTransferSrc,
+                                 VMA_MEMORY_USAGE_CPU_ONLY, 0);
+        staging.update(const_cast<void*>(data), size);
+
+        auto cb = beginSingleTimeCommands();
+        copy_buffer(cb, staging, *buffer);
+        endSingleTimeCommands(cb);
+    }
+
+    return std::move(buffer);
+}
+
+vk::CommandBuffer vk_device::beginSingleTimeCommands()
+{
+    vk::CommandBufferAllocateInfo allocInfo{};
+    allocInfo.level              = vk::CommandBufferLevel::ePrimary;
+    allocInfo.commandPool        = commandPool;
+    allocInfo.commandBufferCount = 1;
+
+    vk::CommandBuffer commandBuffer;
+    VK_CHECK(handle().allocateCommandBuffers(&allocInfo, &commandBuffer));
+
+    vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+
+    commandBuffer.begin(beginInfo);
+    return commandBuffer;
+}
+
+void vk_device::endSingleTimeCommands(vk::CommandBuffer commandBuffer)
+{
+    commandBuffer.end();
+
+    vk::SubmitInfo submitInfo{};
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers    = &commandBuffer;
+
+    queue_->submit(commandBuffer, get_fence_pool().request_fence());
+
+    get_fence_pool().wait();
+    get_fence_pool().reset();
+
+    handle().freeCommandBuffers(commandPool, 1, &commandBuffer);
 }

@@ -86,7 +86,7 @@ vk_render_frame::get_command_pools(const vk_queue& queue, vk_command_buffer::res
 
     if (command_pool_it != command_pools.end()) {
         assert(!command_pool_it->second.empty());
-        if (command_pool_it->second[0]->get_reset_mode() != reset_mode) {
+        if (command_pool_it->second[0]->reset_mode() != reset_mode) {
             device.wait_idle();
 
             command_pools.erase(command_pool_it);
@@ -97,10 +97,10 @@ vk_render_frame::get_command_pools(const vk_queue& queue, vk_command_buffer::res
 
     std::vector<std::unique_ptr<vk_command_pool>> queue_command_pools;
 
-    for (size_t i = 0; i < thread_count; i++) {
-        queue_command_pools.push_back(
-            std::make_unique<vk_command_pool>(device, queue.get_family_index(), this, i, reset_mode));
-    }
+//    for (size_t i = 0; i < thread_count; i++) {
+//        queue_command_pools.push_back(
+//            std::make_unique<vk_command_pool>(device, queue.get_family_index(), this, i, reset_mode));
+//    }
 
     auto res_ins_it = command_pools.emplace(queue.get_family_index(), std::move(queue_command_pools));
 
@@ -186,7 +186,7 @@ vk_render_frame::request_command_buffer(const vk_queue& queue, vk_command_buffer
     auto& command_pools = get_command_pools(queue, reset_mode);
     auto command_pool_it = std::find_if(command_pools.begin(), command_pools.end(),
                                         [&thread_index](std::unique_ptr<vk_command_pool>& cmd_pool) {
-                                            return cmd_pool->get_thread_index() == thread_index;
+                                            return 0 == thread_index;
                                         });
     
     return (*command_pool_it)->request_command_buffer(vk::CommandBufferLevel(level));

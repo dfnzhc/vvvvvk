@@ -58,10 +58,11 @@ vk::Bool32 vk_queue::support_present() const
     return can_present;
 }
 
-void vk_queue::submit(const vk_command_buffer& command_buffer, vk::Fence fence) const
+void vk_queue::submit(const vk::CommandBuffer& command_buffer, vk::Fence fence) const
 {
-    vk::CommandBuffer commandBuffer = command_buffer.handle();
+    vk::CommandBuffer commandBuffer = command_buffer;
     vk::SubmitInfo    submit_info({}, {}, commandBuffer);
+    
     handle.submit(submit_info, fence);
 }
 

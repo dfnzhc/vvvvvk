@@ -46,15 +46,27 @@ public:
                      const vk_framebuffer* framebuffer, uint32_t subpass_index);
 
     vk::Result end();
-    
+
     // @formatter:off
+    void set_viewport(uint32_t first_viewport, const std::vector<vk::Viewport> &viewports);
+    void set_scissor(uint32_t first_scissor, const std::vector<vk::Rect2D> &scissors);
+    void set_line_width(float line_width);
+    void set_depth_bias(float depth_bias_constant_factor, float depth_bias_clamp, float depth_bias_slope_factor);
+    void set_blend_constants(const std::array<float, 4> &blend_constants);
+    void set_depth_bounds(float min_depth_bounds, float max_depth_bounds);
+    void update_buffer(const vk_buffer& buffer, vk::DeviceSize offset, const std::vector<uint8_t>& data);
+    // @formatter:on
+    
     void copy_buffer(const vk_buffer& src_buffer, const vk_buffer& dst_buffer, vk::DeviceSize size);
     void copy_image(const vk_image& src_img, const vk_image& dst_img, const std::vector<vk::ImageCopy>& regions);
     
+    // @formatter:off
     void copy_buffer_to_image(const vk_buffer& buffer, const vk_image& image, const std::vector<vk::BufferImageCopy>& regions);
     void copy_image_to_buffer(const vk_image& image, vk::ImageLayout image_layout, const vk_buffer& buffer, const std::vector<vk::BufferImageCopy>& regions);
-    // @formatter:on
+    
     void image_memory_barrier(const vk_image_view& image_view, const ImageMemoryBarrier& memory_barrier) const;
+    void buffer_memory_barrier(const vk_buffer& buffer, vk::DeviceSize offset, vk::DeviceSize size, const BufferMemoryBarrier& memory_barrier);
+    // @formatter:on
 
 private:
     const vk::CommandBufferLevel level = {};

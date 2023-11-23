@@ -148,8 +148,8 @@ struct BufferMemoryBarrier
 
 struct ImageMemoryBarrier
 {
-    vk::PipelineStageFlags src_stage_mask = vk::PipelineStageFlagBits::eBottomOfPipe;
-    vk::PipelineStageFlags dst_stage_mask = vk::PipelineStageFlagBits::eTopOfPipe;
+    vk::PipelineStageFlags src_stage_mask   = vk::PipelineStageFlagBits::eBottomOfPipe;
+    vk::PipelineStageFlags dst_stage_mask   = vk::PipelineStageFlagBits::eTopOfPipe;
     vk::AccessFlags        src_access_mask;
     vk::AccessFlags        dst_access_mask;
     vk::ImageLayout        old_layout       = vk::ImageLayout::eUndefined;
@@ -157,3 +157,51 @@ struct ImageMemoryBarrier
     uint32_t               old_queue_family = VK_QUEUE_FAMILY_IGNORED;
     uint32_t               new_queue_family = VK_QUEUE_FAMILY_IGNORED;
 };
+
+inline vk::Sampler create_sampler(vk::Device device, vk::Filter filter,
+                                  vk::SamplerAddressMode sampler_address_mode,
+                                  float max_anisotropy, float max_LOD)
+{
+    vk::SamplerCreateInfo sampler_create_info;
+
+    sampler_create_info.magFilter               = filter;
+    sampler_create_info.minFilter               = filter;
+    sampler_create_info.mipmapMode              = vk::SamplerMipmapMode::eLinear;
+    sampler_create_info.addressModeU            = sampler_address_mode;
+    sampler_create_info.addressModeV            = sampler_address_mode;
+    sampler_create_info.addressModeW            = sampler_address_mode;
+    sampler_create_info.mipLodBias              = 0.0f;
+    sampler_create_info.anisotropyEnable        = (1.0f < max_anisotropy);
+    sampler_create_info.maxAnisotropy           = max_anisotropy;
+    sampler_create_info.compareEnable           = false;
+    sampler_create_info.compareOp               = vk::CompareOp::eNever;
+    sampler_create_info.minLod                  = 0.0f;
+    sampler_create_info.maxLod                  = max_LOD;
+    sampler_create_info.borderColor             = vk::BorderColor::eFloatOpaqueWhite;
+    sampler_create_info.unnormalizedCoordinates = false;
+
+    return device.createSampler(sampler_create_info);
+}
+
+inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage, vk::Format format)
+{
+    vk::ImageAspectFlags image_aspect_flags;
+    switch (usage) {
+        case vk::ImageUsageFlagBits::eColorAttachment:
+            assert(!is_depth_format(format));
+            image_aspect_flags = vk::ImageAspectFlagBits::eColor;
+            break;
+        case vk::ImageUsageFlagBits::eDepthStencilAttachment:
+            assert(is_depth_format(format));
+            image_aspect_flags = vk::ImageAspectFlagBits::eDepth;
+            // Stencil aspect should only be set on depth + stencil formats
+            if (is_depth_stencil_format(format)) {
+                image_aspect_flags |= vk::ImageAspectFlagBits::eStencil;
+            }
+            break;
+        default:
+            assert(false);
+    }
+
+    return image_aspect_flags;
+}

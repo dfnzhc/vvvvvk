@@ -70,14 +70,26 @@ public:
                                                         vk::ImageUsageFlags usage,
                                                         vk::MemoryPropertyFlags properties) const;
 
-    void copy_buffer(vk_buffer& src, vk_buffer& dst,
-                     vk::Queue queue, vk::BufferCopy* copy_region = nullptr) const;
+    //--------------------------------------------------------------------------------------------------
+    // 创建缓冲区
 
+    std::unique_ptr<vk_buffer> createBuffer(const vk::DeviceSize& size,
+                                            const void* data,
+                                            vk::BufferUsageFlags usage,
+                                            vk::MemoryPropertyFlags memProps = vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-    vk_command_pool& get_command_pool();
-    vk::CommandBuffer create_command_buffer(vk::CommandBufferLevel level, bool begin = false) const;
-    void flush_command_buffer(vk::CommandBuffer command_buffer,
-                              vk::Queue queue, bool free = true, vk::Semaphore signalSemaphore = VK_NULL_HANDLE) const;
+    template<typename T>
+    std::unique_ptr<vk_buffer> createBuffer(const std::vector<T>& data,
+                                            vk::BufferUsageFlags usage,
+                                            vk::MemoryPropertyFlags memProps_ = vk::MemoryPropertyFlagBits::eDeviceLocal)
+    {
+        return createBuffer(sizeof(T) * data.size(), data.data(), usage, memProps_);
+    }
+    
+    vk::CommandBuffer beginSingleTimeCommands();
+
+    void endSingleTimeCommands(vk::CommandBuffer commandBuffer);
+
 
     vk_fence_pool& get_fence_pool();
 
@@ -94,9 +106,10 @@ private:
 
     VmaAllocator memory_allocator{VK_NULL_HANDLE};
 
+    const vk_queue* queue_;
     std::vector<std::vector<vk_queue>> queues;
-
-    std::unique_ptr<vk_command_pool> command_pool;
+    
+    vk::CommandPool commandPool{VK_NULL_HANDLE};
 
     std::unique_ptr<vk_fence_pool> fence_pool;
 };

@@ -39,7 +39,7 @@ public:
 
     vk::Bool32 support_present() const;
 
-    void submit(const vk_command_buffer& command_buffer, vk::Fence fence) const;
+    void submit(const vk::CommandBuffer& command_buffer, vk::Fence fence) const;
 
     vk::Result present(const vk::PresentInfoKHR& present_infos) const;
 

@@ -7,14 +7,11 @@
 
 #include "CommandBufferPool.hpp"
 #include "Device.hpp"
-#include "RenderFrame.hpp"
 
 vk_command_pool::vk_command_pool(vk_device& d,
                                  uint32_t queue_family_index,
-                                 vk_render_frame* render_frame,
-                                 size_t thread_index,
                                  vk_command_buffer::reset_mode reset_mode) :
-    device{d}, render_frame{render_frame}, thread_index{thread_index}, reset_mode{reset_mode}
+    device_{d}, reset_mode_{reset_mode}
 {
     vk::CommandPoolCreateFlags flags;
     switch (reset_mode) {
@@ -29,77 +26,65 @@ vk_command_pool::vk_command_pool(vk_device& d,
     }
 
     vk::CommandPoolCreateInfo command_pool_create_info(flags, queue_family_index);
-    handle = device.handle().createCommandPool(command_pool_create_info);
+    handle_ = device_.handle().createCommandPool(command_pool_create_info);
 }
 
 vk_command_pool::vk_command_pool(vk_command_pool&& other) noexcept :
-    device(other.device),
-    handle(std::exchange(other.handle, {})),
-    queue_family_index(std::exchange(other.queue_family_index, {})),
-    primary_command_buffers{std::move(other.primary_command_buffers)},
-    active_primary_command_buffer_count(std::exchange(other.active_primary_command_buffer_count, {})),
-    secondary_command_buffers{std::move(other.secondary_command_buffers)},
-    active_secondary_command_buffer_count(std::exchange(other.active_secondary_command_buffer_count, {})),
-    render_frame(std::exchange(other.render_frame, {})),
-    thread_index(std::exchange(other.thread_index, {})),
-    reset_mode(std::exchange(other.reset_mode, {}))
+    device_(other.device_),
+    handle_(std::exchange(other.handle_, {})),
+    queue_family_index_(std::exchange(other.queue_family_index_, {})),
+    primary_command_buffers_{std::move(other.primary_command_buffers_)},
+    active_primary_command_buffer_count_(std::exchange(other.active_primary_command_buffer_count_, {})),
+    secondary_command_buffers_{std::move(other.secondary_command_buffers_)},
+    active_secondary_command_buffer_count_(std::exchange(other.active_secondary_command_buffer_count_, {})),
+    reset_mode_(std::exchange(other.reset_mode_, {}))
 {
 }
 
 vk_command_pool::~vk_command_pool()
 {
     // 清楚所有记录的命令缓冲区
-    primary_command_buffers.clear();
-    secondary_command_buffers.clear();
+    primary_command_buffers_.clear();
+    secondary_command_buffers_.clear();
 
     // Destroy command pool
-    if (handle) {
-        device.handle().destroyCommandPool(handle);
+    if (handle_) {
+        device_.handle().destroyCommandPool(handle_);
     }
 }
 
-vk_device& vk_command_pool::get_device()
+vk_device& vk_command_pool::device()
 {
-    return device;
+    return device_;
 }
 
-vk::CommandPool vk_command_pool::get_handle() const
+vk::CommandPool vk_command_pool::handle() const
 {
-    return handle;
+    return handle_;
 }
 
-uint32_t vk_command_pool::get_queue_family_index() const
+uint32_t vk_command_pool::queue_family_index() const
 {
-    return queue_family_index;
-}
-
-vk_render_frame* vk_command_pool::get_render_frame()
-{
-    return render_frame;
-}
-
-size_t vk_command_pool::get_thread_index() const
-{
-    return thread_index;
+    return queue_family_index_;
 }
 
 void vk_command_pool::reset_pool()
 {
-    switch (reset_mode) {
+    switch (reset_mode_) {
         case vk_command_buffer::reset_mode::ResetIndividually:
             reset_command_buffers();
             break;
 
         case vk_command_buffer::reset_mode::ResetPool:
-            device.handle().resetCommandPool(handle);
+            device_.handle().resetCommandPool(handle_);
             reset_command_buffers();
             break;
 
         case vk_command_buffer::reset_mode::AlwaysAllocate:
-            primary_command_buffers.clear();
-            active_primary_command_buffer_count = 0;
-            secondary_command_buffers.clear();
-            active_secondary_command_buffer_count = 0;
+            primary_command_buffers_.clear();
+            active_primary_command_buffer_count_ = 0;
+            secondary_command_buffers_.clear();
+            active_secondary_command_buffer_count_ = 0;
             break;
 
         default:
@@ -110,42 +95,42 @@ void vk_command_pool::reset_pool()
 vk_command_buffer& vk_command_pool::request_command_buffer(vk::CommandBufferLevel level)
 {
     if (level == vk::CommandBufferLevel::ePrimary) {
-        if (active_primary_command_buffer_count < primary_command_buffers.size()) {
-            return *primary_command_buffers[active_primary_command_buffer_count++];
+        if (active_primary_command_buffer_count_ < primary_command_buffers_.size()) {
+            return *primary_command_buffers_[active_primary_command_buffer_count_++];
         }
 
-        primary_command_buffers.emplace_back(std::make_unique<vk_command_buffer>(*this, level));
+        primary_command_buffers_.emplace_back(std::make_unique<vk_command_buffer>(*this, level));
 
-        active_primary_command_buffer_count++;
+        active_primary_command_buffer_count_++;
 
-        return *primary_command_buffers.back();
+        return *primary_command_buffers_.back();
     } else {
-        if (active_secondary_command_buffer_count < secondary_command_buffers.size()) {
-            return *secondary_command_buffers[active_secondary_command_buffer_count++];
+        if (active_secondary_command_buffer_count_ < secondary_command_buffers_.size()) {
+            return *secondary_command_buffers_[active_secondary_command_buffer_count_++];
         }
 
-        secondary_command_buffers.emplace_back(std::make_unique<vk_command_buffer>(*this, level));
+        secondary_command_buffers_.emplace_back(std::make_unique<vk_command_buffer>(*this, level));
 
-        active_secondary_command_buffer_count++;
+        active_secondary_command_buffer_count_++;
 
-        return *secondary_command_buffers.back();
+        return *secondary_command_buffers_.back();
     }
 }
 
-vk_command_buffer::reset_mode vk_command_pool::get_reset_mode() const
+vk_command_buffer::reset_mode vk_command_pool::reset_mode() const
 {
-    return reset_mode;
+    return reset_mode_;
 }
 
 void vk_command_pool::reset_command_buffers()
 {
-    for (auto& cmd_buf: primary_command_buffers) {
-        cmd_buf->reset(reset_mode);
+    for (auto& cmd_buf: primary_command_buffers_) {
+        cmd_buf->reset(reset_mode_);
     }
-    active_primary_command_buffer_count = 0;
+    active_primary_command_buffer_count_ = 0;
 
-    for (auto& cmd_buf: secondary_command_buffers) {
-        cmd_buf->reset(reset_mode);
+    for (auto& cmd_buf: secondary_command_buffers_) {
+        cmd_buf->reset(reset_mode_);
     }
-    active_secondary_command_buffer_count = 0;
+    active_secondary_command_buffer_count_ = 0;
 }

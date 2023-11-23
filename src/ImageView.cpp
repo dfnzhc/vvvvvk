@@ -32,6 +32,12 @@ vk_image_view::vk_image_view(vk_image& img,
                                   array_layer,
                                   n_array_layers == 0 ? image->get_subresource().arrayLayer : n_array_layers);
 
+    if (is_depth_only_format(format)) {
+        subresource_range.aspectMask = vk::ImageAspectFlagBits::eDepth;
+    } else if (is_depth_stencil_format(format)) {
+        subresource_range.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
+    }
+
     vk::ImageViewCreateInfo image_view_create_info({}, image->handle(), view_type, format, {}, subresource_range);
 
     set_handle(device().handle().createImageView(image_view_create_info));

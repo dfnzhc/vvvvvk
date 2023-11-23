@@ -70,6 +70,11 @@ set(SOURCE_FILES
         src/Renderpass.hpp
         src/Sampler.cpp
         src/Sampler.hpp
+        src/Commands.cpp
+        src/Commands.hpp
+        src/VkUtils.cpp
+        src/VkUtils.hpp
+        src/Utils.hpp
 )
 
 add_executable(Vk ${SOURCE_FILES})

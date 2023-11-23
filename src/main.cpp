@@ -27,6 +27,8 @@
 #include "Renderpass.hpp"
 #include "Framebuffer.hpp"
 #include "Sampler.hpp"
+#include "VkUtils.hpp"
+#include "Commands.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -80,13 +82,6 @@ struct QueueFamilyIndices
     {
         return graphicsFamily.has_value() && presentFamily.has_value();
     }
-};
-
-struct SwapChainSupportDetails
-{
-    VkSurfaceCapabilitiesKHR        capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR>   presentModes;
 };
 
 struct Vertex
@@ -194,14 +189,10 @@ private:
 
     std::vector<Vertex>   vertices;
     std::vector<uint32_t> indices;
-    VkBuffer              vertexBuffer;
-    VkDeviceMemory        vertexBufferMemory;
-    VkBuffer              indexBuffer;
-    VkDeviceMemory        indexBufferMemory;
 
-    std::vector<VkBuffer>       uniformBuffers;
-    std::vector<VkDeviceMemory> uniformBuffersMemory;
-    std::vector<void*>          uniformBuffersMapped;
+    std::unique_ptr<vk_buffer> vertexBuffer1;
+    std::unique_ptr<vk_buffer> indexBuffer1;
+    std::vector<std::unique_ptr<vk_buffer>> uniformBuffers1;
 
     VkDescriptorPool             descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
@@ -293,9 +284,9 @@ private:
         vkDestroyPipelineLayout(device->handle(), pipelineLayout, nullptr);
         vkDestroyRenderPass(device->handle(), renderPass, nullptr);
 
+
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroyBuffer(device->handle(), uniformBuffers[i], nullptr);
-            vkFreeMemory(device->handle(), uniformBuffersMemory[i], nullptr);
+            uniformBuffers1[i].reset();
         }
 
         vkDestroyDescriptorPool(device->handle(), descriptorPool, nullptr);
@@ -306,11 +297,8 @@ private:
 
         vkDestroyDescriptorSetLayout(device->handle(), descriptorSetLayout, nullptr);
 
-        vkDestroyBuffer(device->handle(), indexBuffer, nullptr);
-        vkFreeMemory(device->handle(), indexBufferMemory, nullptr);
-
-        vkDestroyBuffer(device->handle(), vertexBuffer, nullptr);
-        vkFreeMemory(device->handle(), vertexBufferMemory, nullptr);
+        vertexBuffer1.reset();
+        indexBuffer1.reset();
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroySemaphore(device->handle(), renderFinishedSemaphores[i], nullptr);
@@ -680,32 +668,6 @@ private:
         }
     }
 
-    VkFormat
-    findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
-    {
-        for (VkFormat format: candidates) {
-            VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(physicalDevice->handle(), format, &props);
-
-            if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
-                return format;
-            } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
-                return format;
-            }
-        }
-
-        throw std::runtime_error("failed to find supported format!");
-    }
-
-    VkFormat findDepthFormat()
-    {
-        return findSupportedFormat(
-            {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-        );
-    }
-
     void createTextureImage()
     {
         int texWidth, texHeight, texChannels;
@@ -732,23 +694,11 @@ private:
 
         textureImageView1 = std::make_unique<vk_image_view>(*textureImage1, vk::ImageViewType::e2D);
 
-        auto& command_buffer = device->get_command_pool().request_command_buffer();
+        auto command_buffer = device->beginSingleTimeCommands();
 
-        // Begin recording
-        command_buffer.begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-
-        {
-            // Prepare for transfer
-            ImageMemoryBarrier memory_barrier;
-            memory_barrier.old_layout      = vk::ImageLayout::eUndefined;
-            memory_barrier.new_layout      = vk::ImageLayout::eTransferDstOptimal;
-            memory_barrier.src_access_mask = {};
-            memory_barrier.dst_access_mask = vk::AccessFlagBits::eTransferWrite;
-            memory_barrier.src_stage_mask  = vk::PipelineStageFlagBits::eTopOfPipe;
-            memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eTransfer;
-
-            command_buffer.image_memory_barrier(*textureImageView1, memory_barrier);
-        }
+        image_layout_transition(command_buffer, textureImage1->handle(),
+                                vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
+                                textureImageView1->get_subresource_range());
 
         // Copy
         vk::BufferImageCopy buffer_copy_region;
@@ -756,31 +706,13 @@ private:
         buffer_copy_region.imageSubresource.aspectMask = textureImageView1->get_subresource_range().aspectMask;
         buffer_copy_region.imageExtent                 = textureImage1->get_extent();
 
-        command_buffer.copy_buffer_to_image(stage_buffer, *textureImage1, {buffer_copy_region});
+        copy_buffer_to_image(command_buffer, stage_buffer, *textureImage1, {buffer_copy_region});
 
-        {
-            // Prepare for fragmen shader
-            ImageMemoryBarrier memory_barrier{};
-            memory_barrier.old_layout      = vk::ImageLayout::eTransferDstOptimal;
-            memory_barrier.new_layout      = vk::ImageLayout::eShaderReadOnlyOptimal;
-            memory_barrier.src_access_mask = vk::AccessFlagBits::eTransferWrite;
-            memory_barrier.dst_access_mask = vk::AccessFlagBits::eShaderRead;
-            memory_barrier.src_stage_mask  = vk::PipelineStageFlagBits::eTransfer;
-            memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eFragmentShader;
+        image_layout_transition(command_buffer, textureImage1->handle(),
+                                vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
+                                textureImageView1->get_subresource_range());
 
-            command_buffer.image_memory_barrier(*textureImageView1, memory_barrier);
-        }
-
-        // End recording
-        command_buffer.end();
-        
-        auto &queue = device->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
-        queue.submit(command_buffer, device->get_fence_pool().request_fence());
-
-        // Wait for the command buffer to finish its work before destroying the staging buffer
-        device->get_fence_pool().wait();
-        device->get_fence_pool().reset();
-        device->get_command_pool().reset_pool();
+        device->endSingleTimeCommands(command_buffer);
     }
 
     void createTextureSampler()
@@ -839,66 +771,23 @@ private:
 
     void createVertexBuffer()
     {
-        VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-
-        VkBuffer       stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                     stagingBufferMemory);
-
-        void* data;
-        vkMapMemory(device->handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, vertices.data(), (size_t) bufferSize);
-        vkUnmapMemory(device->handle(), stagingBufferMemory);
-
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
-
-        copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-
-        vkDestroyBuffer(device->handle(), stagingBuffer, nullptr);
-        vkFreeMemory(device->handle(), stagingBufferMemory, nullptr);
+        vertexBuffer1 = device->createBuffer(vertices, vk::BufferUsageFlagBits::eVertexBuffer);
     }
 
     void createIndexBuffer()
     {
-        VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
-
-        VkBuffer       stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                     stagingBufferMemory);
-
-        void* data;
-        vkMapMemory(device->handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, indices.data(), (size_t) bufferSize);
-        vkUnmapMemory(device->handle(), stagingBufferMemory);
-
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
-
-        copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-
-        vkDestroyBuffer(device->handle(), stagingBuffer, nullptr);
-        vkFreeMemory(device->handle(), stagingBufferMemory, nullptr);
+        indexBuffer1 = device->createBuffer(indices, vk::BufferUsageFlagBits::eIndexBuffer);
     }
 
     void createUniformBuffers()
     {
         VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-        uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-        uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-        uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+        uniformBuffers1.resize(MAX_FRAMES_IN_FLIGHT);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i],
-                         uniformBuffersMemory[i]);
-
-            vkMapMemory(device->handle(), uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
+            uniformBuffers1[i] = device->createBuffer(bufferSize, nullptr, vk::BufferUsageFlagBits::eUniformBuffer,
+                                                      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
         }
     }
 
@@ -937,7 +826,7 @@ private:
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = uniformBuffers[i];
+            bufferInfo.buffer = uniformBuffers1[i]->handle();
             bufferInfo.offset = 0;
             bufferInfo.range  = sizeof(UniformBufferObject);
 
@@ -968,94 +857,6 @@ private:
                                    descriptorWrites.data(), 0,
                                    nullptr);
         }
-    }
-
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
-                      VkDeviceMemory& bufferMemory)
-    {
-        VkBufferCreateInfo bufferInfo{};
-        bufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size        = size;
-        bufferInfo.usage       = usage;
-        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        if (vkCreateBuffer(device->handle(), &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create buffer!");
-        }
-
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(device->handle(), buffer, &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo{};
-        allocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.allocationSize  = memRequirements.size;
-        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-
-        if (vkAllocateMemory(device->handle(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate buffer memory!");
-        }
-
-        vkBindBufferMemory(device->handle(), buffer, bufferMemory, 0);
-    }
-
-    VkCommandBuffer beginSingleTimeCommands()
-    {
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool        = commandPool;
-        allocInfo.commandBufferCount = 1;
-
-        VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(device->handle(), &allocInfo, &commandBuffer);
-
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-        return commandBuffer;
-    }
-
-    void endSingleTimeCommands(VkCommandBuffer commandBuffer)
-    {
-        vkEndCommandBuffer(commandBuffer);
-
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers    = &commandBuffer;
-
-        vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(graphicsQueue);
-
-        vkFreeCommandBuffers(device->handle(), commandPool, 1, &commandBuffer);
-    }
-
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-    {
-        VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-        VkBufferCopy copyRegion{};
-        copyRegion.size = size;
-        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-        endSingleTimeCommands(commandBuffer);
-    }
-
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
-    {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(physicalDevice->handle(), &memProperties);
-
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-                return i;
-            }
-        }
-
-        throw std::runtime_error("failed to find suitable memory type!");
     }
 
     void createCommandBuffers()
@@ -1114,11 +915,11 @@ private:
         scissor.extent = swapChainExtent;
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-        VkBuffer     vertexBuffers[] = {vertexBuffer};
+        VkBuffer     vertexBuffers[] = {vertexBuffer1->handle()};
         VkDeviceSize offsets[]       = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffer1->handle(), 0, VK_INDEX_TYPE_UINT32);
 
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
                                 &descriptorSets[currentFrame], 0, nullptr);
@@ -1170,7 +971,7 @@ private:
                                      10.0f);
         ubo.proj[1][1] *= -1;
 
-        memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+        uniformBuffers1[currentImage]->update(&ubo, sizeof(ubo));
     }
 
     void drawFrame()
